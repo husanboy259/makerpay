@@ -1,0 +1,73 @@
+import {
+  Controller,
+  Post,
+  Get,
+  Body,
+  Param,
+  Query,
+  Req,
+  UseGuards,
+  HttpCode,
+  HttpStatus,
+} from '@nestjs/common';
+import { ApiTags, ApiOperation, ApiBearerAuth } from '@nestjs/swagger';
+import { PaymentsService } from './payments.service';
+import { CreatePaymentDto } from './dto/create-payment.dto';
+import { RefundPaymentDto } from './dto/refund-payment.dto';
+import { QueryPaymentsDto } from './dto/query-payments.dto';
+import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
+
+@ApiTags('payments')
+@ApiBearerAuth()
+@UseGuards(JwtAuthGuard)
+@Controller('payments')
+export class PaymentsController {
+  constructor(private readonly paymentsService: PaymentsService) {}
+
+  @Post('create')
+  @ApiOperation({ summary: 'Create a new payment' })
+  async createPayment(@Req() req: any, @Body() dto: CreatePaymentDto) {
+    const merchantId = req.user.merchantId || req.merchant?.id;
+    return this.paymentsService.createPayment(merchantId, dto, req.apiKeyId);
+  }
+
+  @Get()
+  @ApiOperation({ summary: 'List payments with filters' })
+  async getPayments(@Req() req: any, @Query() query: QueryPaymentsDto) {
+    const merchantId = req.user.merchantId || req.merchant?.id;
+    return this.paymentsService.getPayments(merchantId, query);
+  }
+
+  @Get('stats')
+  @ApiOperation({ summary: 'Get payment statistics' })
+  async getStats(@Req() req: any) {
+    const merchantId = req.user.merchantId || req.merchant?.id;
+    return this.paymentsService.getMerchantStats(merchantId);
+  }
+
+  @Get('chart')
+  @ApiOperation({ summary: 'Get daily revenue chart data' })
+  async getChart(@Req() req: any) {
+    const merchantId = req.user.merchantId || req.merchant?.id;
+    return this.paymentsService.getDailyChart(merchantId, 7);
+  }
+
+  @Get(':id')
+  @ApiOperation({ summary: 'Get payment status' })
+  async getPaymentStatus(@Req() req: any, @Param('id') id: string) {
+    const merchantId = req.user.merchantId || req.merchant?.id;
+    return this.paymentsService.getPaymentStatus(merchantId, id);
+  }
+
+  @Post(':id/refund')
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({ summary: 'Refund a payment' })
+  async refundPayment(
+    @Req() req: any,
+    @Param('id') id: string,
+    @Body() dto: RefundPaymentDto,
+  ) {
+    const merchantId = req.user.merchantId || req.merchant?.id;
+    return this.paymentsService.refundPayment(merchantId, id, dto, req.user.id);
+  }
+}

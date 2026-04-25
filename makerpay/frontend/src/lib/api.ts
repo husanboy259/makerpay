@@ -1,0 +1,98 @@
+import axios from 'axios';
+import { useAuthStore } from '@/store/auth.store';
+
+const api = axios.create({
+  baseURL: process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/api/v1',
+  timeout: 30000,
+});
+
+api.interceptors.request.use((config) => {
+  const token = useAuthStore.getState().token;
+  if (token) config.headers.Authorization = `Bearer ${token}`;
+  return config;
+});
+
+api.interceptors.response.use(
+  (response) => response.data,
+  (error) => {
+    if (error.response?.status === 401) {
+      useAuthStore.getState().logout();
+      window.location.href = '/login';
+    }
+    return Promise.reject(error.response?.data || error);
+  },
+);
+
+// ─── Auth ─────────────────────────────────────────────────────────────────────
+export const authApi = {
+  login:           (data: any)  => api.post('/auth/login', data),
+  register:        (data: any)  => api.post('/auth/register', data),
+  verifyOtp:       (email: string, code: string) => api.post('/auth/verify-otp', { email, code }),
+  resendOtp:       (email: string) => api.post('/auth/resend-otp', { email }),
+  getProfile:      ()           => api.get('/auth/me'),
+  updateProfile:   (data: any)  => api.put('/auth/profile', data),
+  changePassword:  (data: any)  => api.post('/auth/change-password', data),
+};
+
+// ─── Merchants ────────────────────────────────────────────────────────────────
+export const merchantsApi = {
+  create:       (data: any)           => api.post('/merchants', data),
+  getMe:        ()                    => api.get('/merchants/me'),
+  update:       (data: any)           => api.put('/merchants/me', data),
+  getAll:       (params?: any)        => api.get('/merchants', { params }),
+  getById:      (id: string)          => api.get(`/merchants/${id}`),
+  approve:      (id: string)          => api.post(`/merchants/${id}/approve`),
+  suspend:      (id: string, reason: string) => api.post(`/merchants/${id}/suspend`, { reason }),
+};
+
+// ─── Payments ─────────────────────────────────────────────────────────────────
+export const paymentsApi = {
+  create:   (data: any)          => api.post('/payments/create', data),
+  getAll:   (params?: any)       => api.get('/payments', { params }),
+  getStats: ()                   => api.get('/payments/stats'),
+  getChart: ()                   => api.get('/payments/chart'),
+  getById:  (id: string)         => api.get(`/payments/${id}`),
+  refund:   (id: string, data: any) => api.post(`/payments/${id}/refund`, data),
+};
+
+// ─── Providers ────────────────────────────────────────────────────────────────
+export const providersApi = {
+  connect:      (data: any)           => api.post('/providers/connect', data),
+  getAll:       ()                    => api.get('/providers'),
+  update:       (id: string, data: any) => api.put(`/providers/${id}`, data),
+  disconnect:   (id: string)          => api.delete(`/providers/${id}`),
+  test:         (id: string)          => api.post(`/providers/${id}/test`),
+  createApiKey: (data: any)           => api.post('/providers/api-keys', data),
+  getApiKeys:   ()                    => api.get('/providers/api-keys'),
+  revokeApiKey: (id: string)          => api.delete(`/providers/api-keys/${id}`),
+};
+
+// ─── Markets ──────────────────────────────────────────────────────────────────
+export const marketsApi = {
+  getAll:  ()                    => api.get('/markets'),
+  create:  (data: any)           => api.post('/markets', data),
+  update:  (id: string, data: any) => api.put(`/markets/${id}`, data),
+  delete:  (id: string)          => api.delete(`/markets/${id}`),
+};
+
+// ─── Webhooks ─────────────────────────────────────────────────────────────────
+export const webhooksApi = {
+  getLogs: (params?: any) => api.get('/webhooks/logs', { params }),
+};
+
+// ─── Admin ────────────────────────────────────────────────────────────────────
+export const adminApi = {
+  getStats:         ()          => api.get('/admin/stats'),
+  getPayments:      (params?: any) => api.get('/admin/payments', { params }),
+  getUsers:         (params?: any) => api.get('/admin/users', { params }),
+  getUserById:      (id: string)   => api.get(`/admin/users/${id}`),
+  updateUserRole:   (id: string, role: string) => api.put(`/admin/users/${id}/role`, { role }),
+  banUser:          (id: string)   => api.patch(`/admin/users/${id}/ban`),
+  unbanUser:        (id: string)   => api.patch(`/admin/users/${id}/unban`),
+  getUserLogs:      (id: string)   => api.get(`/admin/users/${id}/logs`),
+  getErrors:        (params?: any) => api.get('/admin/errors', { params }),
+  getWebhookErrors: (params?: any) => api.get('/admin/webhook-errors', { params }),
+  getRevenueChart:  (days?: number) => api.get('/admin/revenue-chart', { params: { days } }),
+};
+
+export default api;

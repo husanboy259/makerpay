@@ -1,0 +1,20 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 220" width="200" height="220">
+  <defs>
+    <linearGradient id="qg" x1="0%" y1="100%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#00C49A"/>
+      <stop offset="100%" stop-color="#00E5D4"/>
+    </linearGradient>
+  </defs>
+
+  <!-- Q circle ring -->
+  <circle cx="100" cy="95" r="62" fill="none" stroke="url(#qg)" stroke-width="18" stroke-dasharray="310 80" stroke-dashoffset="0" stroke-linecap="round"/>
+
+  <!-- Arrow line (lower-left to upper-right) -->
+  <line x1="52" y1="148" x2="155" y2="45" stroke="url(#qg)" stroke-width="18" stroke-linecap="round"/>
+
+  <!-- Arrow head -->
+  <polyline points="122,38 155,45 148,78" fill="none" stroke="url(#qg)" stroke-width="16" stroke-linecap="round" stroke-linejoin="round"/>
+
+  <!-- QULAYPAY text -->
+  <text x="100" y="198" font-family="Arial, Helvetica, sans-serif" font-size="22" font-weight="900" text-anchor="middle" fill="#00C49A" letter-spacing="3">QULAYPAY</text>
+</svg>
