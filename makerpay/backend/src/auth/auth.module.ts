@@ -9,6 +9,7 @@ import { JwtStrategy } from './strategies/jwt.strategy';
 import { LocalStrategy } from './strategies/local.strategy';
 import { GoogleStrategy } from './strategies/google.strategy';
 import { User } from '../users/entities/user.entity';
+import { Merchant } from '../merchants/entities/merchant.entity';
 import { UsersModule } from '../users/users.module';
 import { MailModule } from '../mail/mail.module';
 
@@ -23,7 +24,7 @@ import { MailModule } from '../mail/mail.module';
         signOptions: { expiresIn: config.get('JWT_EXPIRES_IN', '7d') },
       }),
     }),
-    TypeOrmModule.forFeature([User]),
+    TypeOrmModule.forFeature([User, Merchant]),
     UsersModule,
     MailModule,
   ],

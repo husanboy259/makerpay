@@ -63,6 +63,13 @@ export class ProvidersController {
     return this.providersService.testConnection(merchantId, id);
   }
 
+  @Post('activate/:providerName')
+  @ApiOperation({ summary: 'Activate a Makerpay partnership provider (mirpay, paynest)' })
+  async activate(@Req() req: any, @Param('providerName') providerName: string) {
+    const merchantId = req.user.merchantId || req.merchant?.id;
+    return this.providersService.activateMakerpayProvider(merchantId, providerName);
+  }
+
   // ─── API Keys ─────────────────────────────────────────────────────────
 
   @Post('api-keys')

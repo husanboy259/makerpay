@@ -5,6 +5,7 @@ import { ConfigService } from '@nestjs/config';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { User } from '../../users/entities/user.entity';
+import { Merchant } from '../../merchants/entities/merchant.entity';
 
 @Injectable()
 export class JwtStrategy extends PassportStrategy(Strategy) {
@@ -12,6 +13,8 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
     private readonly config: ConfigService,
     @InjectRepository(User)
     private readonly userRepo: Repository<User>,
+    @InjectRepository(Merchant)
+    private readonly merchantRepo: Repository<Merchant>,
   ) {
     super({
       jwtFromRequest: ExtractJwt.fromAuthHeaderAsBearerToken(),
@@ -25,6 +28,12 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
       where: { id: payload.sub, isActive: true },
     });
     if (!user) throw new UnauthorizedException('Token is invalid');
-    return user;
+
+    const merchant = await this.merchantRepo.findOne({
+      where: { userId: user.id },
+      select: ['id'],
+    });
+
+    return { ...user, merchantId: merchant?.id ?? null };
   }
 }

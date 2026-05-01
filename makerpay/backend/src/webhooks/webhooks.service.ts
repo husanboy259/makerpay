@@ -3,8 +3,9 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Cron, CronExpression } from '@nestjs/schedule';
 import axios from 'axios';
+import * as crypto from 'crypto';
 import { WebhookLog } from './entities/webhook-log.entity';
-import { PaymentsService } from '../payments/payments.service';
+import { Payment } from '../payments/entities/payment.entity';
 import { MerchantProvider } from '../providers/entities/merchant-provider.entity';
 
 @Injectable()
@@ -16,6 +17,8 @@ export class WebhooksService {
     private readonly webhookLogRepo: Repository<WebhookLog>,
     @InjectRepository(MerchantProvider)
     private readonly mpRepo: Repository<MerchantProvider>,
+    @InjectRepository(Payment)
+    private readonly paymentRepo: Repository<Payment>,
   ) {}
 
   async handleInboundWebhook(
@@ -23,7 +26,6 @@ export class WebhooksService {
     payload: any,
     signature?: string,
   ): Promise<void> {
-    // Log inbound webhook
     const log = this.webhookLogRepo.create({
       providerName,
       direction: 'inbound',
@@ -33,10 +35,54 @@ export class WebhooksService {
     });
     await this.webhookLogRepo.save(log);
 
-    // Find which merchant this belongs to
-    const orderId = payload.order_id || payload.invoice_number || payload.payment_id;
+    const providerPaymentId = payload.payment_id || payload.transaction_id || payload.id;
+    const externalOrderId   = payload.order_id   || payload.invoice_number || payload.merchant_order_id;
+    const rawStatus         = payload.status      || payload.payment_status;
 
-    this.logger.log(`Inbound webhook from ${providerName}: ${orderId}`);
+    if (!rawStatus) return;
+
+    const statusMap: Record<string, string> = {
+      paid: 'completed', success: 'completed', completed: 'completed',
+      failed: 'failed', error: 'failed', cancelled: 'cancelled',
+      processing: 'processing', pending: 'pending',
+    };
+    const mappedStatus = statusMap[rawStatus?.toLowerCase()] || 'pending';
+
+    // Find the payment by provider payment ID or external order ID
+    let payment: Payment | null = null;
+    if (providerPaymentId) {
+      payment = await this.paymentRepo.findOne({ where: { providerPaymentId } });
+    }
+    if (!payment && externalOrderId) {
+      payment = await this.paymentRepo.findOne({ where: { externalOrderId } });
+    }
+
+    if (payment) {
+      // Verify webhook signature if merchant has set a webhookSecret
+      const mp = await this.mpRepo.findOne({
+        where: { merchantId: payment.merchantId, providerName },
+        select: ['id', 'webhookSecret'],
+      });
+
+      if (mp?.webhookSecret && signature) {
+        const isValid = this.verifySignature(payload, signature, mp.webhookSecret);
+        if (!isValid) {
+          this.logger.warn(`Invalid webhook signature from ${providerName} for merchant ${payment.merchantId}`);
+          await this.webhookLogRepo.update(log.id, { status: 'failed', errorMessage: 'Invalid signature' });
+          return;
+        }
+      }
+
+      const update: any = { status: mappedStatus };
+      if (mappedStatus === 'completed') update.paidAt = new Date();
+      if (providerPaymentId) update.providerPaymentId = providerPaymentId;
+      await this.paymentRepo.update(payment.id, update);
+      await this.webhookLogRepo.update(log.id, { status: 'delivered', merchantId: payment.merchantId });
+      this.logger.log(`Payment ${payment.id} updated to ${mappedStatus} via ${providerName} webhook`);
+    } else {
+      this.logger.warn(`No payment found for webhook from ${providerName}: orderId=${externalOrderId}`);
+      await this.webhookLogRepo.update(log.id, { status: 'failed', errorMessage: 'Payment not found' });
+    }
   }
 
   async forwardWebhookToMerchant(
@@ -82,6 +128,19 @@ export class WebhooksService {
       take: limit,
     });
     return { data, meta: { total, page, limit } };
+  }
+
+  private verifySignature(payload: any, signature: string, secret: string): boolean {
+    try {
+      const data = typeof payload === 'string' ? payload : JSON.stringify(payload);
+      const expected = crypto.createHmac('sha256', secret).update(data).digest('hex');
+      const sigBuf = Buffer.from(signature.replace(/^sha256=/, ''), 'hex');
+      const expBuf = Buffer.from(expected, 'hex');
+      if (sigBuf.length !== expBuf.length) return false;
+      return crypto.timingSafeEqual(sigBuf, expBuf);
+    } catch {
+      return false;
+    }
   }
 
   @Cron(CronExpression.EVERY_MINUTE)

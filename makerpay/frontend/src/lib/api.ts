@@ -57,14 +57,15 @@ export const paymentsApi = {
 
 // ─── Providers ────────────────────────────────────────────────────────────────
 export const providersApi = {
-  connect:      (data: any)           => api.post('/providers/connect', data),
-  getAll:       ()                    => api.get('/providers'),
-  update:       (id: string, data: any) => api.put(`/providers/${id}`, data),
-  disconnect:   (id: string)          => api.delete(`/providers/${id}`),
-  test:         (id: string)          => api.post(`/providers/${id}/test`),
-  createApiKey: (data: any)           => api.post('/providers/api-keys', data),
-  getApiKeys:   ()                    => api.get('/providers/api-keys'),
-  revokeApiKey: (id: string)          => api.delete(`/providers/api-keys/${id}`),
+  connect:        (data: any)             => api.post('/providers/connect', data),
+  activate:       (providerName: string)  => api.post(`/providers/activate/${providerName}`),
+  getAll:         ()                      => api.get('/providers'),
+  update:         (id: string, data: any) => api.put(`/providers/${id}`, data),
+  disconnect:     (id: string)            => api.delete(`/providers/${id}`),
+  test:           (id: string)            => api.post(`/providers/${id}/test`),
+  createApiKey:   (data: any)             => api.post('/providers/api-keys', data),
+  getApiKeys:     ()                      => api.get('/providers/api-keys'),
+  revokeApiKey:   (id: string)            => api.delete(`/providers/api-keys/${id}`),
 };
 
 // ─── Markets ──────────────────────────────────────────────────────────────────
@@ -93,6 +94,16 @@ export const adminApi = {
   getErrors:        (params?: any) => api.get('/admin/errors', { params }),
   getWebhookErrors: (params?: any) => api.get('/admin/webhook-errors', { params }),
   getRevenueChart:  (days?: number) => api.get('/admin/revenue-chart', { params: { days } }),
+};
+
+// ─── Support ──────────────────────────────────────────────────────────────────
+export const supportApi = {
+  createTicket:  (data: any)                       => api.post('/support/tickets', data),
+  getTickets:    (params?: any)                    => api.get('/support/tickets', { params }),
+  getTicket:     (id: string)                      => api.get(`/support/tickets/${id}`),
+  reply:         (id: string, data: any)           => api.post(`/support/tickets/${id}/reply`, data),
+  updateStatus:  (id: string, status: string)      => api.patch(`/support/tickets/${id}/status`, { status }),
+  assign:        (id: string, userId: string)      => api.patch(`/support/tickets/${id}/assign`, { userId }),
 };
 
 export default api;

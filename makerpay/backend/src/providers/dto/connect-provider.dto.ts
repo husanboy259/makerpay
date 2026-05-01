@@ -1,14 +1,15 @@
 import { IsString, IsBoolean, IsOptional, IsIn, IsUrl } from 'class-validator';
 
 export class ConnectProviderDto {
-  @IsIn(['tspay', 'paynest', 'tulovpay'])
+  @IsIn(['tspay', 'qulaypay'])
   providerName: string;
 
   @IsString()
   apiKey: string;
 
+  @IsOptional()
   @IsString()
-  secretKey: string;
+  secretKey?: string;
 
   @IsOptional()
   @IsString()

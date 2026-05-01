@@ -11,16 +11,14 @@ import {
   HttpCode,
   HttpStatus,
 } from '@nestjs/common';
-import { Response } from 'express';
 import { ApiTags, ApiOperation, ApiBearerAuth } from '@nestjs/swagger';
-import { Request } from 'express';
+import { Request, Response } from 'express';
 import { AuthService } from './auth.service';
 import { RegisterDto } from './dto/register.dto';
 import { LoginDto } from './dto/login.dto';
 import { ChangePasswordDto } from './dto/change-password.dto';
 import { UpdateProfileDto } from './dto/update-profile.dto';
 import { JwtAuthGuard } from './guards/jwt-auth.guard';
-import { GoogleAuthGuard } from './guards/google-auth.guard';
 
 @ApiTags('auth')
 @Controller('auth')
@@ -73,7 +71,7 @@ export class AuthController {
   @Get('google')
   @ApiOperation({ summary: 'Google OAuth login' })
   async googleAuth(@Res() res: Response) {
-    const clientId = process.env.GOOGLE_CLIENT_ID;
+    const clientId   = process.env.GOOGLE_CLIENT_ID;
     const callbackUrl = process.env.GOOGLE_CALLBACK_URL;
     const url = `https://accounts.google.com/o/oauth2/v2/auth?client_id=${clientId}&redirect_uri=${encodeURIComponent(callbackUrl)}&response_type=code&scope=email%20profile`;
     return res.redirect(url);

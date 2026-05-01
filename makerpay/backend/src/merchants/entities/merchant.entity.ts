@@ -99,6 +99,25 @@ export class Merchant {
   @Column({ name: 'telegram_username', nullable: true })
   telegramUsername: string;
 
+  // Startup / Company info
+  @Column({ nullable: true })
+  description: string;
+
+  @Column({ name: 'founded_at', type: 'date', nullable: true })
+  foundedAt: Date;
+
+  @Column({ name: 'employee_count', nullable: true })
+  employeeCount: number;
+
+  @Column({ name: 'instagram_url', nullable: true })
+  instagramUrl: string;
+
+  @Column({ name: 'linkedin_url', nullable: true })
+  linkedinUrl: string;
+
+  @Column({ name: 'twitter_url', nullable: true })
+  twitterUrl: string;
+
   // Documents
   @Column({ type: 'jsonb', default: [] })
   documents: any[];

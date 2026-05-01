@@ -7,7 +7,7 @@ import {
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import * as crypto from 'crypto';
-import { MerchantProvider, ProviderStatus } from './entities/merchant-provider.entity';
+import { MerchantProvider, ProviderStatus, ConnectionType } from './entities/merchant-provider.entity';
 import { ApiKey } from './entities/api-key.entity';
 import { BasePaymentAdapter } from './base.adapter';
 import { TsPayAdapter } from './adapters/tspay.adapter';
@@ -41,7 +41,7 @@ export class ProvidersService {
 
     const encKey = process.env.ENCRYPTION_KEY || 'default-key-change-in-production-32c';
     const encryptedApiKey = this.encrypt(dto.apiKey, encKey);
-    const encryptedSecretKey = this.encrypt(dto.secretKey, encKey);
+    const encryptedSecretKey = this.encrypt(dto.secretKey || '', encKey);
 
     const mp = this.mpRepo.create({
       merchantId,
@@ -103,6 +103,30 @@ export class ProvidersService {
     return this.mpRepo.save(mp);
   }
 
+  async activateMakerpayProvider(merchantId: string, providerName: string) {
+    const MAKERPAY_PROVIDERS = ['mirpay', 'paynest'];
+    if (!MAKERPAY_PROVIDERS.includes(providerName)) {
+      throw new BadRequestException(`${providerName} is not a Makerpay partnership provider`);
+    }
+
+    const existing = await this.mpRepo.findOne({ where: { merchantId, providerName } });
+    if (existing) throw new ConflictException(`Provider ${providerName} already activated`);
+
+    const mp = this.mpRepo.create({
+      merchantId,
+      providerName,
+      connectionType: ConnectionType.MAKERPAY,
+      // placeholder values — real keys come from env at runtime
+      apiKey: 'makerpay_managed',
+      secretKey: 'makerpay_managed',
+      isDefault: false,
+      testMode: false,
+      extraConfig: {},
+    });
+
+    return this.mpRepo.save(mp);
+  }
+
   async disconnectProvider(merchantId: string, id: string) {
     const mp = await this.mpRepo.findOne({ where: { id, merchantId } });
     if (!mp) throw new NotFoundException('Provider connection not found');
@@ -157,10 +181,22 @@ export class ProvidersService {
   }
 
   private buildAdapter(mp: MerchantProvider): BasePaymentAdapter {
-    const encKey = process.env.ENCRYPTION_KEY || 'default-key-change-in-production-32c';
+    let apiKey: string;
+    let secretKey: string;
+
+    if (mp.connectionType === ConnectionType.MAKERPAY) {
+      const envPrefix = mp.providerName.toUpperCase();
+      apiKey = process.env[`${envPrefix}_API_KEY`] || '';
+      secretKey = process.env[`${envPrefix}_SECRET_KEY`] || '';
+    } else {
+      const encKey = process.env.ENCRYPTION_KEY || 'default-key-change-in-production-32c';
+      apiKey = this.decrypt(mp.apiKey, encKey);
+      secretKey = this.decrypt(mp.secretKey, encKey);
+    }
+
     const credentials = {
-      apiKey: this.decrypt(mp.apiKey, encKey),
-      secretKey: this.decrypt(mp.secretKey, encKey),
+      apiKey,
+      secretKey,
       merchantId: mp.providerMerchantId,
       testMode: mp.testMode,
       extraConfig: mp.extraConfig,
@@ -179,8 +215,11 @@ export class ProvidersService {
   // ─── API Keys ─────────────────────────────────────────────────────────
 
   async createApiKey(merchantId: string, dto: CreateApiKeyDto, createdBy: string) {
-    const rawKey = `mpk_${dto.environment === 'sandbox' ? 'test' : 'live'}_${crypto.randomBytes(24).toString('hex')}`;
-    const keyHash = crypto.createHash('sha256').update(rawKey).digest('hex');
+    const env     = dto.environment === 'sandbox' ? 'test' : 'live';
+    const keyType = dto.keyType || 'secret';
+    const prefix  = keyType === 'publishable' ? `mpk_pub_${env}` : `mpk_${env}`;
+    const rawKey  = `${prefix}_${crypto.randomBytes(24).toString('hex')}`;
+    const keyHash   = crypto.createHash('sha256').update(rawKey).digest('hex');
     const keyPrefix = rawKey.substring(0, 16);
 
     const apiKey = this.apiKeyRepo.create({
@@ -189,7 +228,11 @@ export class ProvidersService {
       keyHash,
       keyPrefix,
       environment: dto.environment || 'production',
-      permissions: dto.permissions || ['payments:create', 'payments:read', 'refunds:create'],
+      keyType,
+      permissions:     dto.permissions     || ['payments:create', 'payments:read', 'refunds:create'],
+      allowedDomains:  dto.allowedDomains  || [],
+      allowedIps:      dto.allowedIps      || [],
+      rateLimitPerMin: dto.rateLimitPerMin || 60,
       createdBy,
     });
 

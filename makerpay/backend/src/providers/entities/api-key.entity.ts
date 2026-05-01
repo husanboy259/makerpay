@@ -47,6 +47,18 @@ export class ApiKey {
   @Column({ name: 'expires_at', nullable: true })
   expiresAt: Date;
 
+  @Column({ name: 'key_type', default: 'secret' })
+  keyType: string; // 'secret' | 'publishable'
+
+  @Column({ name: 'allowed_domains', type: 'text', array: true, default: [] })
+  allowedDomains: string[];
+
+  @Column({ name: 'allowed_ips', type: 'text', array: true, default: [] })
+  allowedIps: string[];
+
+  @Column({ name: 'rate_limit_per_min', default: 60 })
+  rateLimitPerMin: number;
+
   @Column({ name: 'created_by', nullable: true })
   createdBy: string;
 

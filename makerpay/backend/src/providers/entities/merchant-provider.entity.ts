@@ -16,6 +16,11 @@ export enum ProviderStatus {
   ERROR = 'error',
 }
 
+export enum ConnectionType {
+  USER = 'user',       // merchant's own API keys
+  MAKERPAY = 'makerpay', // via Makerpay partnership (no user keys)
+}
+
 @Entity('merchant_providers')
 @Unique(['merchantId', 'providerName'])
 export class MerchantProvider {
@@ -30,7 +35,10 @@ export class MerchantProvider {
   merchant: Merchant;
 
   @Column({ name: 'provider_name' })
-  providerName: string; // tspay | paynest | tulovpay
+  providerName: string;
+
+  @Column({ name: 'connection_type', type: 'enum', enum: ConnectionType, default: ConnectionType.USER })
+  connectionType: ConnectionType;
 
   // Credentials (encrypted in service layer)
   @Column({ name: 'api_key', select: false })

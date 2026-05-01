@@ -12,6 +12,10 @@ import { WebhooksModule } from './webhooks/webhooks.module';
 import { AdminModule } from './admin/admin.module';
 import { MarketsModule } from './markets/markets.module';
 import { MailModule } from './mail/mail.module';
+import { SupportModule } from './support/support.module';
+import { AdsModule } from './ads/ads.module';
+import { SubscriptionsModule } from './subscriptions/subscriptions.module';
+import { WithdrawalsModule } from './withdrawals/withdrawals.module';
 import configuration from './config/configuration';
 
 @Module({
@@ -55,6 +59,10 @@ import configuration from './config/configuration';
     AdminModule,
     MarketsModule,
     MailModule,
+    SupportModule,
+    AdsModule,
+    SubscriptionsModule,
+    WithdrawalsModule,
   ],
 })
 export class AppModule {}

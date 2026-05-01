@@ -4,7 +4,7 @@ import { usePathname } from 'next/navigation';
 import {
   LayoutDashboard, CreditCard, GitBranch, Key, Webhook,
   FileText, Users, ShieldCheck, BarChart2, Settings,
-  LogOut, ChevronRight, HelpCircle, MessageSquare, Store, Rocket, Send,
+  LogOut, ChevronRight, HelpCircle, MessageSquare, Store, Rocket, Send, Megaphone, Crown, Banknote,
 } from 'lucide-react';
 import { useAuthStore } from '@/store/auth.store';
 import { useRouter } from 'next/navigation';
@@ -17,6 +17,7 @@ const menusByRole = {
     { href: '/dashboard/merchant/transactions',icon: CreditCard,      label: 'Tranzaksiyalar' },
     { href: '/dashboard/merchant/providers',   icon: GitBranch,       label: 'Provayderlar' },
     { href: '/dashboard/merchant/api-keys',    icon: Key,             label: 'API Kalitlar' },
+    { href: '/dashboard/merchant/withdraw',    icon: Banknote,        label: 'Balans yechish' },
     { href: '/dashboard/merchant/webhooks',    icon: Webhook,         label: 'Webhook loglar' },
     { href: '/dashboard/merchant/deploy',      icon: Rocket,          label: 'Deploy' },
     { href: '/dashboard/merchant/profile',     icon: Settings,        label: 'Profil' },
@@ -30,6 +31,8 @@ const menusByRole = {
     { href: '/dashboard/admin/providers',      icon: GitBranch,       label: "To'lov ekotizimi" },
     { href: '/dashboard/admin/deploy',         icon: Rocket,          label: 'Deploy' },
     { href: '/dashboard/admin/analytics',      icon: BarChart2,       label: 'Analitika' },
+    { href: '/dashboard/admin/subscriptions',  icon: Crown,           label: 'Obunalar' },
+    { href: '/dashboard/admin/ads',            icon: Megaphone,       label: 'Reklama' },
     { href: '/dashboard/admin/errors',         icon: HelpCircle,      label: 'Xatolik loglari' },
     { href: '/dashboard/admin/settings',       icon: Settings,        label: 'Sozlamalar' },
   ],
