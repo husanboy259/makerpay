@@ -1,8 +1,9 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable, NotFoundException, ForbiddenException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { SupportTicket, TicketMessage } from './entities/support-ticket.entity';
 import { CreateTicketDto, ReplyTicketDto } from './dto/create-ticket.dto';
+import { UserRole } from '../users/entities/user.entity';
 
 @Injectable()
 export class SupportService {
@@ -65,9 +66,17 @@ export class SupportService {
     return { data, meta: { total, page, limit } };
   }
 
-  async getTicketById(id: string) {
+  private isPrivilegedRole(role: string): boolean {
+    return [UserRole.ADMIN, UserRole.MANAGER, UserRole.SUPPORT].includes(role as UserRole);
+  }
+
+  async getTicketById(id: string, callerRole: string, callerMerchantId?: string) {
     const ticket = await this.ticketRepo.findOne({ where: { id } });
     if (!ticket) throw new NotFoundException('Ticket not found');
+
+    if (!this.isPrivilegedRole(callerRole) && ticket.merchantId !== callerMerchantId) {
+      throw new ForbiddenException('Access denied');
+    }
 
     const messages = await this.messageRepo.find({
       where: { ticketId: id },
@@ -77,9 +86,13 @@ export class SupportService {
     return { ...ticket, messages };
   }
 
-  async replyToTicket(ticketId: string, userId: string, dto: ReplyTicketDto) {
+  async replyToTicket(ticketId: string, userId: string, callerRole: string, callerMerchantId: string | undefined, dto: ReplyTicketDto) {
     const ticket = await this.ticketRepo.findOne({ where: { id: ticketId } });
     if (!ticket) throw new NotFoundException('Ticket not found');
+
+    if (!this.isPrivilegedRole(callerRole) && ticket.merchantId !== callerMerchantId) {
+      throw new ForbiddenException('Access denied');
+    }
 
     if (!ticket.firstResponseAt && dto.isInternal !== true) {
       await this.ticketRepo.update(ticketId, { firstResponseAt: new Date() });

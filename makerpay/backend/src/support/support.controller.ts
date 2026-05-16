@@ -6,6 +6,9 @@ import { ApiTags, ApiOperation, ApiBearerAuth } from '@nestjs/swagger';
 import { SupportService } from './support.service';
 import { CreateTicketDto, ReplyTicketDto } from './dto/create-ticket.dto';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
+import { RolesGuard } from '../auth/guards/roles.guard';
+import { Roles } from '../auth/decorators/roles.decorator';
+import { UserRole } from '../users/entities/user.entity';
 
 @ApiTags('support')
 @ApiBearerAuth()
@@ -39,24 +42,30 @@ export class SupportController {
 
   @Get('tickets/:id')
   @ApiOperation({ summary: 'Get ticket by ID' })
-  async getOne(@Param('id') id: string) {
-    return this.supportService.getTicketById(id);
+  async getOne(@Req() req: any, @Param('id') id: string) {
+    const merchantId = req.user.merchantId || req.merchant?.id;
+    return this.supportService.getTicketById(id, req.user.role, merchantId);
   }
 
   @Post('tickets/:id/reply')
   @ApiOperation({ summary: 'Reply to a ticket' })
   async reply(@Req() req: any, @Param('id') id: string, @Body() dto: ReplyTicketDto) {
-    return this.supportService.replyToTicket(id, req.user.id, dto);
+    const merchantId = req.user.merchantId || req.merchant?.id;
+    return this.supportService.replyToTicket(id, req.user.id, req.user.role, merchantId, dto);
   }
 
   @Patch('tickets/:id/status')
-  @ApiOperation({ summary: 'Update ticket status' })
+  @UseGuards(RolesGuard)
+  @Roles(UserRole.ADMIN, UserRole.MANAGER, UserRole.SUPPORT)
+  @ApiOperation({ summary: 'Update ticket status (admin/support only)' })
   async updateStatus(@Param('id') id: string, @Body('status') status: string) {
     return this.supportService.updateStatus(id, status);
   }
 
   @Patch('tickets/:id/assign')
-  @ApiOperation({ summary: 'Assign ticket to support agent' })
+  @UseGuards(RolesGuard)
+  @Roles(UserRole.ADMIN, UserRole.MANAGER)
+  @ApiOperation({ summary: 'Assign ticket to support agent (admin only)' })
   async assign(@Param('id') id: string, @Body('userId') userId: string) {
     return this.supportService.assignTicket(id, userId);
   }

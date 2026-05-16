@@ -2,6 +2,9 @@ import { Controller, Get, Post, Patch, Body, Param, Query, Req, UseGuards } from
 import { ApiTags, ApiOperation, ApiBearerAuth } from '@nestjs/swagger';
 import { SubscriptionsService } from './subscriptions.service';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
+import { RolesGuard } from '../auth/guards/roles.guard';
+import { Roles } from '../auth/decorators/roles.decorator';
+import { UserRole } from '../users/entities/user.entity';
 
 @ApiTags('subscriptions')
 @ApiBearerAuth()
@@ -62,42 +65,56 @@ export class SubscriptionsController {
   // ─── Admin ────────────────────────────────────────────────────────
 
   @Get('admin/all')
+  @UseGuards(RolesGuard)
+  @Roles(UserRole.ADMIN, UserRole.MANAGER)
   @ApiOperation({ summary: 'All subscriptions (admin)' })
   async getAll(@Query('page') page = 1, @Query('limit') limit = 20) {
     return this.svc.getAllSubscriptions(+page, +limit);
   }
 
   @Get('admin/stats')
+  @UseGuards(RolesGuard)
+  @Roles(UserRole.ADMIN, UserRole.MANAGER)
   @ApiOperation({ summary: 'Subscription stats (admin)' })
   async getStats() {
     return this.svc.getStats();
   }
 
   @Get('admin/trials')
+  @UseGuards(RolesGuard)
+  @Roles(UserRole.ADMIN, UserRole.MANAGER)
   @ApiOperation({ summary: 'All trial applications (admin)' })
   async getTrials(@Query('page') page = 1, @Query('limit') limit = 20, @Query('status') status?: string) {
     return this.svc.getAllTrialApplications(+page, +limit, status);
   }
 
   @Post('admin/assign')
+  @UseGuards(RolesGuard)
+  @Roles(UserRole.ADMIN)
   @ApiOperation({ summary: 'Assign plan to merchant (admin)' })
   async assign(@Req() req: any, @Body() body: { merchantId: string; plan: string; adminNote?: string; months?: number }) {
     return this.svc.assignPlan(body.merchantId, body.plan, req.user.id, body.adminNote, body.months);
   }
 
   @Patch('admin/trials/:id/approve')
+  @UseGuards(RolesGuard)
+  @Roles(UserRole.ADMIN, UserRole.MANAGER)
   @ApiOperation({ summary: 'Approve trial application' })
   async approve(@Req() req: any, @Param('id') id: string, @Body('invitationText') invitationText?: string) {
     return this.svc.approveTrialApplication(id, req.user.id, invitationText);
   }
 
   @Patch('admin/trials/:id/reject')
+  @UseGuards(RolesGuard)
+  @Roles(UserRole.ADMIN, UserRole.MANAGER)
   @ApiOperation({ summary: 'Reject trial application' })
   async reject(@Req() req: any, @Param('id') id: string, @Body('adminNote') adminNote: string) {
     return this.svc.rejectTrialApplication(id, req.user.id, adminNote);
   }
 
   @Patch('admin/trials/:id/invite')
+  @UseGuards(RolesGuard)
+  @Roles(UserRole.ADMIN, UserRole.MANAGER)
   @ApiOperation({ summary: 'Send invitation to startup' })
   async invite(@Req() req: any, @Param('id') id: string, @Body('invitationText') invitationText: string) {
     return this.svc.sendInvitation(id, req.user.id, invitationText);

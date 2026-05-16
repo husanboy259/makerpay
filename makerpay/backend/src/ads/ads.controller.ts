@@ -5,6 +5,9 @@ import {
 import { ApiTags, ApiOperation, ApiBearerAuth } from '@nestjs/swagger';
 import { AdsService } from './ads.service';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
+import { RolesGuard } from '../auth/guards/roles.guard';
+import { Roles } from '../auth/decorators/roles.decorator';
+import { UserRole } from '../users/entities/user.entity';
 import { Ad, AdPosition } from './ad.entity';
 
 @ApiTags('ads')
@@ -43,7 +46,8 @@ export class AdsController {
   // ─── Admin only ───────────────────────────────────────────────────────────
 
   @Get()
-  @UseGuards(JwtAuthGuard)
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(UserRole.ADMIN)
   @ApiBearerAuth()
   @ApiOperation({ summary: 'Get all ads (admin)' })
   async findAll() {
@@ -51,7 +55,8 @@ export class AdsController {
   }
 
   @Get('stats')
-  @UseGuards(JwtAuthGuard)
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(UserRole.ADMIN, UserRole.MANAGER)
   @ApiBearerAuth()
   @ApiOperation({ summary: 'Ad statistics (admin)' })
   async getStats() {
@@ -59,7 +64,8 @@ export class AdsController {
   }
 
   @Get(':id')
-  @UseGuards(JwtAuthGuard)
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(UserRole.ADMIN)
   @ApiBearerAuth()
   @ApiOperation({ summary: 'Get ad by id (admin)' })
   async findOne(@Param('id') id: string) {
@@ -67,7 +73,8 @@ export class AdsController {
   }
 
   @Post()
-  @UseGuards(JwtAuthGuard)
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(UserRole.ADMIN)
   @ApiBearerAuth()
   @ApiOperation({ summary: 'Create ad (admin)' })
   async create(@Body() body: Partial<Ad>) {
@@ -75,7 +82,8 @@ export class AdsController {
   }
 
   @Put(':id')
-  @UseGuards(JwtAuthGuard)
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(UserRole.ADMIN)
   @ApiBearerAuth()
   @ApiOperation({ summary: 'Update ad (admin)' })
   async update(@Param('id') id: string, @Body() body: Partial<Ad>) {
@@ -83,7 +91,8 @@ export class AdsController {
   }
 
   @Patch(':id/toggle')
-  @UseGuards(JwtAuthGuard)
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(UserRole.ADMIN)
   @ApiBearerAuth()
   @ApiOperation({ summary: 'Toggle ad active status (admin)' })
   async toggle(@Param('id') id: string) {
@@ -92,7 +101,8 @@ export class AdsController {
   }
 
   @Delete(':id')
-  @UseGuards(JwtAuthGuard)
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(UserRole.ADMIN)
   @ApiBearerAuth()
   @ApiOperation({ summary: 'Delete ad (admin)' })
   async remove(@Param('id') id: string) {

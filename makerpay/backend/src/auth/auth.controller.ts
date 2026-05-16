@@ -10,22 +10,29 @@ import {
   UseGuards,
   HttpCode,
   HttpStatus,
+  NotFoundException,
 } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiBearerAuth } from '@nestjs/swagger';
 import { Request, Response } from 'express';
+import * as crypto from 'crypto';
 import { AuthService } from './auth.service';
 import { RegisterDto } from './dto/register.dto';
 import { LoginDto } from './dto/login.dto';
 import { ChangePasswordDto } from './dto/change-password.dto';
 import { UpdateProfileDto } from './dto/update-profile.dto';
 import { JwtAuthGuard } from './guards/jwt-auth.guard';
+import { Throttle } from '@nestjs/throttler';
 
 @ApiTags('auth')
 @Controller('auth')
 export class AuthController {
+  // Short-lived in-memory store for OAuth temp codes (TTL: 2 min)
+  private readonly oauthCodes = new Map<string, { data: any; expiresAt: number }>();
+
   constructor(private readonly authService: AuthService) {}
 
   @Post('register')
+  @Throttle({ default: { limit: 5, ttl: 60000 } })
   @ApiOperation({ summary: 'Register new merchant account' })
   async register(@Body() dto: RegisterDto) {
     return this.authService.register(dto);
@@ -46,6 +53,7 @@ export class AuthController {
   }
 
   @Post('login')
+  @Throttle({ default: { limit: 10, ttl: 60000 } })
   @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: 'Login' })
   async login(@Body() dto: LoginDto, @Req() req: Request) {
@@ -83,12 +91,36 @@ export class AuthController {
     const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:3000';
     try {
       const result: any = await this.authService.googleLoginWithCode(code);
-      const u = encodeURIComponent(JSON.stringify(result.user));
-      return res.redirect(`${frontendUrl}/auth/google/success?token=${result.accessToken}&user=${u}`);
+      // Store token data behind a short-lived random code — never expose token in URL
+      const tempCode = crypto.randomBytes(32).toString('hex');
+      this.oauthCodes.set(tempCode, {
+        data: result,
+        expiresAt: Date.now() + 2 * 60 * 1000, // 2 minutes
+      });
+      return res.redirect(`${frontendUrl}/auth/google/success?code=${tempCode}`);
     } catch (e: any) {
       console.error('Google callback error:', e.message);
       return res.redirect(`${frontendUrl}/login?error=google_failed`);
     }
+  }
+
+  @Post('google/exchange')
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({ summary: 'Exchange OAuth temp code for token (one-time use)' })
+  async exchangeOauthCode(@Body('code') code: string) {
+    const entry = this.oauthCodes.get(code);
+    if (!entry || Date.now() > entry.expiresAt) {
+      throw new NotFoundException('Invalid or expired code');
+    }
+    this.oauthCodes.delete(code); // one-time use
+    return entry.data;
+  }
+
+  @Post('telegram')
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({ summary: 'Login with Telegram' })
+  async telegramLogin(@Body() body: any) {
+    return this.authService.telegramLogin(body);
   }
 
   @Post('change-password')
