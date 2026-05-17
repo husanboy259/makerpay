@@ -79,6 +79,9 @@ export class User {
   @Column({ name: 'otp_expires_at', nullable: true })
   otpExpiresAt: Date;
 
+  @Column({ name: 'telegram_id', nullable: true, unique: true })
+  telegramId: string;
+
   @Column({ name: 'telegram_username', nullable: true })
   telegramUsername: string;
 
