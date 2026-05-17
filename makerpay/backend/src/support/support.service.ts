@@ -40,7 +40,7 @@ export class SupportService {
     });
     await this.messageRepo.save(msg);
 
-    return this.getTicketById(saved.id);
+    return this.getTicketById(saved.id, UserRole.ADMIN);
   }
 
   async getMyTickets(merchantId: string, page = 1, limit = 20) {
@@ -113,11 +113,11 @@ export class SupportService {
     if (status === 'resolved') update.resolvedAt = new Date();
     if (status === 'closed') update.closedAt = new Date();
     await this.ticketRepo.update(ticketId, update);
-    return this.getTicketById(ticketId);
+    return this.getTicketById(ticketId, UserRole.ADMIN);
   }
 
   async assignTicket(ticketId: string, assignedTo: string) {
     await this.ticketRepo.update(ticketId, { assignedTo });
-    return this.getTicketById(ticketId);
+    return this.getTicketById(ticketId, UserRole.ADMIN);
   }
 }

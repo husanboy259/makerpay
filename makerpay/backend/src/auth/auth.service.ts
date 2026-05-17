@@ -4,6 +4,7 @@ import {
   ConflictException,
   BadRequestException,
 } from '@nestjs/common';
+import * as crypto from 'crypto';
 import { JwtService } from '@nestjs/jwt';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
@@ -108,6 +109,39 @@ export class AuthService {
         avatarUrl:     googleUser.avatarUrl,
         emailVerified: true,
       });
+    }
+
+    return this.generateTokens(user);
+  }
+
+  async telegramLogin(authData: any) {
+    const { hash, ...data } = authData;
+    const botToken = process.env.TELEGRAM_BOT_TOKEN;
+    if (!botToken) throw new BadRequestException('Telegram not configured');
+
+    const secretKey = crypto.createHash('sha256').update(botToken).digest();
+    const checkString = Object.keys(data).sort().map(k => `${k}=${data[k]}`).join('\n');
+    const hmac = crypto.createHmac('sha256', secretKey).update(checkString).digest('hex');
+
+    if (hmac !== hash) throw new UnauthorizedException('Invalid Telegram auth');
+    if (Date.now() / 1000 - Number(data.auth_date) > 86400) throw new UnauthorizedException('Auth expired');
+
+    const telegramId = String(data.id);
+    let user = await this.userRepo.findOne({ where: { telegramId } });
+
+    if (!user) {
+      user = this.userRepo.create({
+        telegramId,
+        email: `tg_${telegramId}@telegram.makerpay.uz`,
+        fullName: [data.first_name, data.last_name].filter(Boolean).join(' ') || 'Telegram User',
+        telegramUsername: data.username,
+        avatarUrl: data.photo_url,
+        emailVerified: true,
+        isActive: true,
+        role: UserRole.USER,
+        password: crypto.randomBytes(16).toString('hex'),
+      });
+      await this.userRepo.save(user);
     }
 
     return this.generateTokens(user);
