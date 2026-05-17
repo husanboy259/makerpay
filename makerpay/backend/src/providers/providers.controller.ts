@@ -14,6 +14,9 @@ import { ProvidersService } from './providers.service';
 import { ConnectProviderDto } from './dto/connect-provider.dto';
 import { CreateApiKeyDto } from './dto/create-api-key.dto';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
+import { RolesGuard } from '../auth/guards/roles.guard';
+import { Roles } from '../auth/decorators/roles.decorator';
+import { UserRole } from '../users/entities/user.entity';
 
 @ApiTags('providers')
 @ApiBearerAuth()
@@ -64,10 +67,36 @@ export class ProvidersController {
   }
 
   @Post('activate/:providerName')
-  @ApiOperation({ summary: 'Activate a Makerpay partnership provider (mirpay, paynest)' })
+  @ApiOperation({ summary: 'Activate a Makerpay partnership provider' })
   async activate(@Req() req: any, @Param('providerName') providerName: string) {
     const merchantId = req.user.merchantId || req.merchant?.id;
     return this.providersService.activateMakerpayProvider(merchantId, providerName);
+  }
+
+  // ─── Admin Ecosystem Management ───────────────────────────────────────
+
+  @Get('admin/ecosystem')
+  @UseGuards(RolesGuard)
+  @Roles(UserRole.ADMIN, UserRole.MANAGER)
+  @ApiOperation({ summary: 'Get ecosystem stats for all providers' })
+  adminEcosystemStats() {
+    return this.providersService.adminGetEcosystemStats();
+  }
+
+  @Post('admin/ecosystem/:providerName/pause')
+  @UseGuards(RolesGuard)
+  @Roles(UserRole.ADMIN)
+  @ApiOperation({ summary: 'Pause a payment ecosystem for all merchants' })
+  adminPause(@Param('providerName') providerName: string) {
+    return this.providersService.adminPauseEcosystem(providerName);
+  }
+
+  @Post('admin/ecosystem/:providerName/resume')
+  @UseGuards(RolesGuard)
+  @Roles(UserRole.ADMIN)
+  @ApiOperation({ summary: 'Resume a payment ecosystem for all merchants' })
+  adminResume(@Param('providerName') providerName: string) {
+    return this.providersService.adminResumeEcosystem(providerName);
   }
 
   // ─── API Keys ─────────────────────────────────────────────────────────

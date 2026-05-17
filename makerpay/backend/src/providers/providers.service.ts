@@ -103,8 +103,30 @@ export class ProvidersService {
     return this.mpRepo.save(mp);
   }
 
+  async adminPauseEcosystem(providerName: string) {
+    await this.mpRepo.update({ providerName }, { status: ProviderStatus.INACTIVE });
+    return { message: `${providerName} paused for all merchants` };
+  }
+
+  async adminResumeEcosystem(providerName: string) {
+    await this.mpRepo.update({ providerName }, { status: ProviderStatus.ACTIVE });
+    return { message: `${providerName} resumed for all merchants` };
+  }
+
+  async adminGetEcosystemStats() {
+    const providers = ['tspay', 'paynest', 'tulovpay', 'mirpay', 'qulaypay'];
+    return Promise.all(
+      providers.map(async (p) => ({
+        providerName: p,
+        total:  await this.mpRepo.count({ where: { providerName: p } }),
+        active: await this.mpRepo.count({ where: { providerName: p, status: ProviderStatus.ACTIVE } }),
+        paused: await this.mpRepo.count({ where: { providerName: p, status: ProviderStatus.INACTIVE } }),
+      })),
+    );
+  }
+
   async activateMakerpayProvider(merchantId: string, providerName: string) {
-    const MAKERPAY_PROVIDERS = ['mirpay', 'paynest'];
+    const MAKERPAY_PROVIDERS = ['mirpay', 'paynest', 'tspay', 'qulaypay'];
     if (!MAKERPAY_PROVIDERS.includes(providerName)) {
       throw new BadRequestException(`${providerName} is not a Makerpay partnership provider`);
     }

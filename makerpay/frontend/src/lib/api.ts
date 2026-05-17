@@ -32,6 +32,7 @@ export const authApi = {
   getProfile:      ()           => api.get('/auth/me'),
   updateProfile:   (data: any)  => api.put('/auth/profile', data),
   changePassword:  (data: any)  => api.post('/auth/change-password', data),
+  telegramLogin:   (data: any)  => api.post('/auth/telegram', data),
 };
 
 // ─── Merchants ────────────────────────────────────────────────────────────────
@@ -66,14 +67,38 @@ export const providersApi = {
   createApiKey:   (data: any)             => api.post('/providers/api-keys', data),
   getApiKeys:     ()                      => api.get('/providers/api-keys'),
   revokeApiKey:   (id: string)            => api.delete(`/providers/api-keys/${id}`),
+  // Admin ecosystem
+  adminGetEcosystem:    ()               => api.get('/providers/admin/ecosystem'),
+  adminPause:           (name: string)   => api.post(`/providers/admin/ecosystem/${name}/pause`),
+  adminResume:          (name: string)   => api.post(`/providers/admin/ecosystem/${name}/resume`),
 };
 
 // ─── Markets ──────────────────────────────────────────────────────────────────
 export const marketsApi = {
-  getAll:  ()                    => api.get('/markets'),
-  create:  (data: any)           => api.post('/markets', data),
-  update:  (id: string, data: any) => api.put(`/markets/${id}`, data),
-  delete:  (id: string)          => api.delete(`/markets/${id}`),
+  getAll:        ()                      => api.get('/markets'),
+  create:        (data: any)             => api.post('/markets', data),
+  update:        (id: string, data: any) => api.put(`/markets/${id}`, data),
+  delete:        (id: string)            => api.delete(`/markets/${id}`),
+  adminGetAll:   ()                      => api.get('/markets/admin/all'),
+  adminApprove:  (id: string)            => api.post(`/markets/admin/${id}/approve`),
+  adminReject:   (id: string)            => api.post(`/markets/admin/${id}/reject`),
+};
+
+// ─── Storage ──────────────────────────────────────────────────────────────────
+export const storageApi = {
+  getStats:   ()                    => api.get('/storage/stats'),
+  getFiles:   ()                    => api.get('/storage/files'),
+  upload:     (file: File)          => {
+    const form = new FormData();
+    form.append('file', file);
+    return api.post('/storage/upload', form, { headers: { 'Content-Type': 'multipart/form-data' } });
+  },
+  deleteFile: (id: string)          => api.delete(`/storage/files/${id}`),
+  // Workspace / deploy
+  getWorkspace:      ()             => api.get('/storage/workspace'),
+  uploadLocal:       (file: File)   => { const f = new FormData(); f.append('file', file); return api.post('/storage/workspace/upload', f); },
+  uploadZip:         (file: File)   => { const f = new FormData(); f.append('file', file); return api.post('/storage/workspace/upload-zip', f); },
+  exec:              (command: string) => api.post('/storage/workspace/exec', { command }),
 };
 
 // ─── Webhooks ─────────────────────────────────────────────────────────────────
