@@ -11,6 +11,7 @@ import { Repository } from 'typeorm';
 import { ConfigService } from '@nestjs/config';
 import * as bcrypt from 'bcryptjs';
 import { User, UserRole } from '../users/entities/user.entity';
+import { Merchant, MerchantStatus } from '../merchants/entities/merchant.entity';
 import { RegisterDto } from './dto/register.dto';
 import { LoginDto } from './dto/login.dto';
 import { MailService } from '../mail/mail.service';
@@ -20,10 +21,24 @@ export class AuthService {
   constructor(
     @InjectRepository(User)
     private readonly userRepo: Repository<User>,
+    @InjectRepository(Merchant)
+    private readonly merchantRepo: Repository<Merchant>,
     private readonly jwtService: JwtService,
     private readonly config: ConfigService,
     private readonly mailService: MailService,
   ) {}
+
+  private async ensureMerchant(userId: string, fullName: string) {
+    const existing = await this.merchantRepo.findOne({ where: { userId } });
+    if (!existing) {
+      const merchant = this.merchantRepo.create({
+        userId,
+        businessName: fullName || 'My Business',
+        status: MerchantStatus.PENDING_VERIFICATION,
+      });
+      await this.merchantRepo.save(merchant);
+    }
+  }
 
   async register(dto: RegisterDto) {
     const exists = await this.userRepo.findOne({ where: { email: dto.email } });
@@ -111,6 +126,7 @@ export class AuthService {
       });
     }
 
+    await this.ensureMerchant(user.id, user.fullName);
     return this.generateTokens(user);
   }
 
@@ -144,6 +160,7 @@ export class AuthService {
       await this.userRepo.save(user);
     }
 
+    await this.ensureMerchant(user.id, user.fullName);
     return this.generateTokens(user);
   }
 

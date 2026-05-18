@@ -237,6 +237,9 @@ export class ProvidersService {
   // ─── API Keys ─────────────────────────────────────────────────────────
 
   async createApiKey(merchantId: string, dto: CreateApiKeyDto, createdBy: string) {
+    if (!merchantId) {
+      throw new BadRequestException('Merchant profili topilmadi. Avval profil yarating: /dashboard/merchant/profile');
+    }
     const env     = dto.environment === 'sandbox' ? 'test' : 'live';
     const keyType = dto.keyType || 'secret';
     const prefix  = keyType === 'publishable' ? `mpk_pub_${env}` : `mpk_${env}`;
