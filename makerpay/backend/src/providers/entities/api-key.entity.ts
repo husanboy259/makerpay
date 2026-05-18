@@ -32,7 +32,7 @@ export class ApiKey {
   @Column({ default: 'production' })
   environment: string; // production | sandbox
 
-  @Column({ type: 'jsonb', default: ['payments:create', 'payments:read', 'refunds:create'] })
+  @Column({ type: 'text', array: true, default: ['payments:create', 'payments:read', 'refunds:create'] })
   permissions: string[];
 
   @Column({ name: 'is_active', default: true })
