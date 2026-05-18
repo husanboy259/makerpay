@@ -21,6 +21,8 @@ export default function ApiKeysPage() {
 
   const { data } = useQuery({ queryKey: ['api-keys'], queryFn: () => providersApi.getApiKeys() });
 
+  const [createError, setCreateError] = useState('');
+
   const createMutation = useMutation({
     mutationFn: () => providersApi.createApiKey({
       name:            form.name,
@@ -30,7 +32,15 @@ export default function ApiKeysPage() {
       allowedIps:      form.allowedIps     ? form.allowedIps.split(',').map(s => s.trim()).filter(Boolean)     : [],
       rateLimitPerMin: form.rateLimitPerMin,
     }),
-    onSuccess: (res: any) => { setNewKey(res.key); qc.invalidateQueries({ queryKey: ['api-keys'] }); },
+    onSuccess: (res: any) => {
+      setNewKey(res.key);
+      setShowModal(false);
+      setCreateError('');
+      qc.invalidateQueries({ queryKey: ['api-keys'] });
+    },
+    onError: (err: any) => {
+      setCreateError(err?.message || err?.error || 'Kalit yaratishda xato yuz berdi');
+    },
   });
 
   const revokeMutation = useMutation({
@@ -228,12 +238,16 @@ export default function ApiKeysPage() {
                 </>
               )}
 
+              {createError && (
+                <div className="p-3 bg-red-500/10 border border-red-500/20 rounded-xl text-xs text-red-400">{createError}</div>
+              )}
+
               <div className="flex gap-3 pt-2">
-                <button onClick={() => setShowModal(false)}
+                <button onClick={() => { setShowModal(false); setCreateError(''); }}
                   className="flex-1 py-3 rounded-xl border border-white/10 text-gray-400 text-sm font-semibold hover:text-white">
                   Bekor
                 </button>
-                <button onClick={() => { createMutation.mutate(); setShowModal(false); }}
+                <button onClick={() => { setCreateError(''); createMutation.mutate(); }}
                   disabled={!form.name || createMutation.isPending}
                   className="flex-1 py-3 rounded-xl bg-white text-black text-sm font-bold hover:bg-gray-100 transition-all disabled:opacity-50 flex items-center justify-center gap-2">
                   {createMutation.isPending ? <Loader2 className="w-4 h-4 animate-spin" /> : <Shield className="w-4 h-4" />}
