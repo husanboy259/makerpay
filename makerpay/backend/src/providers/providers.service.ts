@@ -267,7 +267,7 @@ export class ProvidersService {
 
   async getMerchantApiKeys(merchantId: string) {
     return this.apiKeyRepo.find({
-      where: { merchantId },
+      where: { merchantId, isActive: true },
       order: { createdAt: 'DESC' },
     });
   }
@@ -276,8 +276,8 @@ export class ProvidersService {
     const key = await this.apiKeyRepo.findOne({ where: { id, merchantId } });
     if (!key) throw new NotFoundException('API key not found');
 
-    await this.apiKeyRepo.update(id, { isActive: false, revokedAt: new Date(), revokedBy });
-    return { message: 'API key revoked' };
+    await this.apiKeyRepo.remove(key);
+    return { message: 'API key deleted' };
   }
 
   async validateApiKey(rawKey: string): Promise<ApiKey | null> {
