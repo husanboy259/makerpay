@@ -17,6 +17,30 @@ import { RefundPaymentDto } from './dto/refund-payment.dto';
 import { QueryPaymentsDto } from './dto/query-payments.dto';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 
+// ─── Public endpoints (no auth) ──────────────────────────────────────────────
+@ApiTags('payments-public')
+@Controller('payments/public')
+export class PaymentsPublicController {
+  constructor(private readonly paymentsService: PaymentsService) {}
+
+  @Get(':id')
+  @ApiOperation({ summary: 'Get payment info publicly' })
+  getPublic(@Param('id') id: string) {
+    return this.paymentsService.getPaymentPublic(id);
+  }
+
+  @Post(':id/confirm')
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({ summary: 'Manual payment confirmation by customer' })
+  manualConfirm(
+    @Param('id') id: string,
+    @Body() body: { customerName?: string; customerPhone?: string },
+  ) {
+    return this.paymentsService.manualConfirm(id, body.customerName, body.customerPhone);
+  }
+}
+
+// ─── Protected endpoints ──────────────────────────────────────────────────────
 @ApiTags('payments')
 @ApiBearerAuth()
 @UseGuards(JwtAuthGuard)

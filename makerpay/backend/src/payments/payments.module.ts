@@ -1,6 +1,6 @@
 import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
-import { PaymentsController } from './payments.controller';
+import { PaymentsController, PaymentsPublicController } from './payments.controller';
 import { PaymentsService } from './payments.service';
 import { Payment } from './entities/payment.entity';
 import { Merchant } from '../merchants/entities/merchant.entity';
@@ -13,7 +13,7 @@ import { WebhooksModule } from '../webhooks/webhooks.module';
     ProvidersModule,
     WebhooksModule,
   ],
-  controllers: [PaymentsController],
+  controllers: [PaymentsController, PaymentsPublicController],
   providers: [PaymentsService],
   exports: [PaymentsService],
 })

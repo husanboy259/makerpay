@@ -75,7 +75,7 @@ export class PaymentsService {
       netAmount: dto.amount - platformFee,
       metadata: dto.metadata || {},
       status: PaymentStatus.PENDING,
-      expiresAt: new Date(Date.now() + 30 * 60 * 1000), // 30 min
+      expiresAt: new Date(Date.now() + 10 * 60 * 1000), // 10 min
     });
 
     await this.paymentRepo.save(payment);
@@ -262,6 +262,48 @@ export class PaymentsService {
       result.push({ date: day, amount: found ? parseFloat(found.amount) : 0, count: found ? parseInt(found.count) : 0 });
     }
     return result;
+  }
+
+  async getPaymentPublic(paymentId: string) {
+    const payment = await this.paymentRepo.findOne({ where: { id: paymentId } });
+    if (!payment) return null;
+    return {
+      id: payment.id,
+      amount: payment.amount,
+      currency: payment.currency,
+      description: payment.description,
+      status: payment.status,
+      externalOrderId: payment.externalOrderId,
+      providerName: payment.providerName,
+      paymentUrl: payment.paymentUrl,
+      createdAt: payment.createdAt,
+    };
+  }
+
+  async manualConfirm(paymentId: string, customerName?: string, customerPhone?: string) {
+    const payment = await this.paymentRepo.findOne({ where: { id: paymentId } });
+    if (!payment) throw new NotFoundException('Payment not found');
+    if (payment.status === PaymentStatus.COMPLETED) return payment;
+    if (!['pending', 'processing'].includes(payment.status)) {
+      throw new BadRequestException('Payment cannot be confirmed');
+    }
+
+    await this.paymentRepo.update(payment.id, {
+      status: PaymentStatus.PROCESSING,
+      customerName: customerName || payment.customerName,
+      customerPhone: customerPhone || payment.customerPhone,
+    });
+
+    // Fire webhook to merchant
+    if (payment.callbackUrl) {
+      this.webhooksService.forwardWebhookToMerchant(
+        payment.merchantId,
+        payment.callbackUrl,
+        { event: 'payment.manual_confirm', paymentId: payment.id, status: PaymentStatus.PROCESSING, amount: payment.amount, currency: payment.currency, externalOrderId: payment.externalOrderId },
+      ).catch(() => {});
+    }
+
+    return { ...payment, status: PaymentStatus.PROCESSING };
   }
 
   async updatePaymentFromWebhook(
