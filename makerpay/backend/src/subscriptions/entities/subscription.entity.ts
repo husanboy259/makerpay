@@ -38,6 +38,10 @@ export class TrialApplication {
   @Column({ name: 'telegram_username', nullable: true }) telegramUsername: string;
   @Column() phone: string;
   @Column({ default: 'pending' }) status: string;
+  @Column({ name: 'verification_amount', type: 'int', default: 6000 }) verificationAmount: number;
+  @Column({ name: 'verification_payer_name', nullable: true }) verificationPayerName: string;
+  @Column({ name: 'verification_payer_phone', nullable: true }) verificationPayerPhone: string;
+  @Column({ name: 'verification_paid', default: false }) verificationPaid: boolean;
   @Column({ name: 'admin_note', nullable: true }) adminNote: string;
   @Column({ name: 'invitation_text', nullable: true }) invitationText: string;
   @Column({ name: 'reviewed_by', nullable: true }) reviewedBy: string;

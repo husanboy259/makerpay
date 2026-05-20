@@ -100,14 +100,29 @@ export class SubscriptionsService {
 
   // ─── Trial applications ────────────────────────────────────────────
 
+  getTrialPaymentInfo() {
+    return {
+      amount: 6000,
+      currency: 'UZS',
+      cardNumber: process.env.PLATFORM_PAYMENT_CARD || '8600 0000 0000 0000',
+      cardHolder: process.env.PLATFORM_CARD_HOLDER || 'MakerPay',
+      description: 'Trial ariza tekshiruv to\'lovi',
+    };
+  }
+
   async applyForTrial(userId: string, merchantId: string, dto: {
     companyName: string; description: string; mvpUrl?: string;
     telegramUsername?: string; phone: string;
+    verificationPayerName?: string; verificationPayerPhone?: string;
   }) {
     const existing = await this.trialRepo.findOne({ where: { userId, status: 'pending' } });
     if (existing) throw new BadRequestException('Sizning arizangiz allaqachon ko\'rib chiqilmoqda');
 
-    const app = this.trialRepo.create({ userId, merchantId, ...dto });
+    const app = this.trialRepo.create({
+      userId, merchantId, ...dto,
+      verificationPaid: !!(dto.verificationPayerName && dto.verificationPayerPhone),
+      verificationAmount: 6000,
+    });
     return this.trialRepo.save(app);
   }
 

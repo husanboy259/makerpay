@@ -49,6 +49,12 @@ export class SubscriptionsController {
     return this.svc.getMySubscription(merchantId);
   }
 
+  @Get('trial/payment-info')
+  @ApiOperation({ summary: 'Get verification payment details for trial' })
+  trialPaymentInfo() {
+    return this.svc.getTrialPaymentInfo();
+  }
+
   @Post('trial/apply')
   @ApiOperation({ summary: 'Apply for TRIAL plan' })
   async applyTrial(@Req() req: any, @Body() body: any) {
