@@ -69,16 +69,18 @@ export default function ApplyTrialPage() {
 
         {/* Progress */}
         <div className="flex items-center gap-3 mb-6">
-          {[{ n: 1, t: 'Ariza' }, { n: 2, t: "To'lov" }].map(({ n, t }, i) => (
-            <div key={n} className="flex items-center gap-2">
-              <div className={`w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold transition-all
-                ${step === 'form' && i === 0 ? 'bg-white text-black' : step === 'payment' && i === 1 ? 'bg-white text-black' : step === 'done' ? 'bg-green-500 text-white' : 'bg-white/10 text-gray-500'}`}>
-                {step === 'done' ? <Check className="w-3.5 h-3.5" /> : n}
+          {[{ n: 1, t: 'Ariza' }, { n: 2, t: "To'lov" }].map(({ n, t }, i) => {
+            const isActive = (step as string) === 'form' && i === 0 || (step as string) === 'payment' && i === 1;
+            return (
+              <div key={n} className="flex items-center gap-2">
+                <div className={`w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold transition-all ${isActive ? 'bg-white text-black' : 'bg-white/10 text-gray-500'}`}>
+                  {n}
+                </div>
+                <span className={`text-sm font-medium ${isActive ? 'text-white' : 'text-gray-600'}`}>{t}</span>
+                {i === 0 && <div className="w-8 h-px bg-white/10" />}
               </div>
-              <span className={`text-sm font-medium ${(step === 'form' && i === 0) || (step === 'payment' && i === 1) ? 'text-white' : 'text-gray-600'}`}>{t}</span>
-              {i === 0 && <div className="w-8 h-px bg-white/10" />}
-            </div>
-          ))}
+            );
+          })}
         </div>
 
         <div className="bg-[#111] border border-white/10 rounded-3xl p-8">
