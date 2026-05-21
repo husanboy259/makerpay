@@ -1,8 +1,8 @@
-import { IsString, IsOptional, IsUrl, IsEmail } from 'class-validator';
+import { IsString, IsOptional, IsUrl, IsEmail, IsInt, IsDateString } from 'class-validator';
 
 export class CreateMerchantDto {
-  @IsString()
-  businessName: string;
+  @IsOptional() @IsString()
+  businessName?: string;
 
   @IsOptional() @IsString()
   businessType?: string;
@@ -16,7 +16,7 @@ export class CreateMerchantDto {
   @IsOptional() @IsString()
   actualAddress?: string;
 
-  @IsOptional() @IsUrl()
+  @IsOptional() @IsString()
   websiteUrl?: string;
 
   @IsOptional() @IsString()
@@ -39,4 +39,22 @@ export class CreateMerchantDto {
 
   @IsOptional() @IsString()
   telegramUsername?: string;
+
+  @IsOptional() @IsString()
+  description?: string;
+
+  @IsOptional() @IsDateString()
+  foundedAt?: string;
+
+  @IsOptional() @IsInt()
+  employeeCount?: number;
+
+  @IsOptional() @IsString()
+  instagramUrl?: string;
+
+  @IsOptional() @IsString()
+  linkedinUrl?: string;
+
+  @IsOptional() @IsString()
+  twitterUrl?: string;
 }

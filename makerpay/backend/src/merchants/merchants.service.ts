@@ -24,10 +24,8 @@ export class MerchantsService {
     return this.merchantRepo.save(merchant);
   }
 
-  async getMyMerchant(userId: string): Promise<Merchant> {
-    const m = await this.merchantRepo.findOne({ where: { userId } });
-    if (!m) throw new NotFoundException('Merchant profile not found');
-    return m;
+  async getMyMerchant(userId: string): Promise<Merchant | null> {
+    return this.merchantRepo.findOne({ where: { userId } }) ?? null;
   }
 
   async update(userId: string, dto: UpdateMerchantDto): Promise<Merchant> {

@@ -64,31 +64,31 @@ const PLANS = [
     price: '0', currency: "so'm", period: '/oy',
     desc: "Kichik biznes uchun, sinab ko'ring",
     badge: null, forever: "Doimiy bepul",
-    features: ['1 ta payment provider', 'Oyiga 500 ta payment', 'Basic webhook', 'Basic logs'],
+    features: ['1 ta payment provider', 'Oyiga 500 ta payment', 'Basic webhook', 'Basic logs', '512 MB storage'],
     ring: 'border-white/10', badgeCls: '', btnCls: 'bg-white/10 text-white hover:bg-white/20',
   },
   {
     id: 'start', emoji: '🔵', name: 'Start',
-    price: '99 000', currency: "so'm", period: '/oy',
+    price: '15 000', currency: "so'm", period: '/oy',
     desc: 'Kichik bizneslar uchun',
     badge: null, forever: null,
-    features: ['1 ta provider', 'Oyiga 5 000 ta payment', 'Payment status API', 'Webhook logs'],
+    features: ['1 ta provider', 'Oyiga 5 000 ta payment', 'Payment status API', 'Webhook logs', '2 GB storage'],
     ring: 'border-blue-500/40', badgeCls: '', btnCls: 'bg-blue-600 text-white hover:bg-blue-500',
   },
   {
     id: 'pro', emoji: '🟣', name: 'Pro',
-    price: '299 000', currency: "so'm", period: '/oy',
+    price: '49 000', currency: "so'm", period: '/oy',
     desc: "O'sayotgan biznes uchun",
     badge: '⭐ Mashhur', forever: null,
-    features: ['3 ta provider', 'Oyiga 20 000 ta payment', 'Refund API', 'Analytics', 'Auto retry webhook'],
+    features: ['3 ta provider', 'Oyiga 20 000 ta payment', 'Refund API', 'Analytics', 'Auto retry webhook', '10 GB storage'],
     ring: 'border-purple-500/60', badgeCls: 'bg-purple-900 text-purple-200', btnCls: 'bg-white text-black hover:bg-gray-100',
   },
   {
     id: 'business', emoji: '🟠', name: 'Business',
-    price: '799 000', currency: "so'm", period: '/oy',
+    price: '129 000', currency: "so'm", period: '/oy',
     desc: 'Katta bizneslar uchun',
     badge: null, forever: null,
-    features: ['Unlimited provider', 'Oyiga 100 000 ta payment', 'Priority support', 'Advanced analytics', 'Multiple webhook endpoints'],
+    features: ['Unlimited provider', 'Oyiga 100 000 ta payment', 'Priority support', 'Advanced analytics', 'Multiple webhook', '50 GB storage'],
     ring: 'border-orange-500/40', badgeCls: '', btnCls: 'bg-orange-600 text-white hover:bg-orange-500',
   },
 ];
@@ -133,7 +133,7 @@ export default function LandingPage() {
       <nav className={`fixed top-0 w-full z-50 transition-all duration-300 ${scrolled ? 'bg-black/90 backdrop-blur-md border-b border-white/10' : 'bg-transparent'}`}>
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <div className="w-9 h-9 rounded-xl overflow-hidden border border-white/10 shrink-0" style={{width:36,height:36}}>
+            <div className="w-9 h-9 rounded-xl overflow-hidden border border-white/10 shrink-0">
               <img src="/logo.png" alt="MakerPay" style={{width:36,height:36,objectFit:'contain',background:'#000'}} />
             </div>
             <span className="font-bold text-xl">Maker<span className="text-gray-500">Pay</span></span>
@@ -171,60 +171,50 @@ export default function LandingPage() {
       </nav>
 
       {/* ── HERO ── */}
-      <section className="relative min-h-screen flex items-center pt-16 overflow-hidden">
-        <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-white/5 rounded-full blur-3xl animate-float-slow" />
-        <div className="absolute bottom-1/4 right-1/4 w-80 h-80 bg-white/3 rounded-full blur-3xl animate-float delay-200" />
+      <section className="relative flex items-center pt-16 overflow-hidden min-h-[90vh] sm:min-h-screen">
+        <div className="absolute top-1/4 left-1/4 w-64 h-64 sm:w-96 sm:h-96 bg-white/5 rounded-full blur-3xl animate-float-slow" />
+        <div className="absolute bottom-1/4 right-1/4 w-56 h-56 sm:w-80 sm:h-80 bg-white/3 rounded-full blur-3xl animate-float delay-200" />
         <div className="absolute inset-0 opacity-[0.03]"
           style={{ backgroundImage: 'radial-gradient(circle, white 1px, transparent 1px)', backgroundSize: '32px 32px' }} />
 
-        <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-24 grid lg:grid-cols-2 gap-16 items-center">
+        <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 sm:py-20 grid lg:grid-cols-2 gap-8 lg:gap-16 items-center w-full">
           <div>
-            {/* Logo above badge */}
-            <div className="mb-6 animate-zoom-in ml-5">
-              <div className="relative inline-block">
-                <div className="absolute inset-0 bg-red-500/25 rounded-3xl blur-3xl animate-glow-pulse" />
-                <div className="relative w-36 h-36 rounded-full overflow-hidden border border-white/15 shadow-2xl animate-float">
-                  <img src="/logo.png" alt="MakerPay" style={{width:'100%',height:'100%',objectFit:'cover',background:'#000'}} />
-                </div>
-              </div>
-            </div>
-
-            <div className="inline-flex items-center gap-2 bg-white/5 border border-white/10 rounded-full px-4 py-1.5 mb-6 animate-fade-in delay-100">
+            <div className="inline-flex items-center gap-2 bg-white/5 border border-white/10 rounded-full px-3 py-1.5 mb-4 sm:mb-6 animate-fade-in delay-100">
               <span className="w-2 h-2 rounded-full bg-green-400 animate-ping-slow" />
               <span className="text-xs font-medium text-gray-300">O'zbekiston uchun №1 Payment API</span>
             </div>
 
-            <h1 className="text-5xl md:text-6xl lg:text-7xl font-extrabold text-white leading-tight mb-6 animate-fade-in delay-200">
+            <h1 className="text-3xl sm:text-5xl md:text-6xl lg:text-7xl font-extrabold text-white leading-tight mb-4 sm:mb-6 animate-fade-in delay-200">
               To&apos;lovlarni{' '}
               <span className="block text-gray-500">avtomatlashtiring</span>
             </h1>
 
-            <p className="text-xl text-gray-500 mb-8 leading-relaxed animate-fade-in delay-200">
-              MakerPay orqali TSPay, Paynest, TulovPay, MirPay va QulaYPayni bitta kuchli API bilan boshqaring. Xavfsiz, tez va ishonchli.
+            <p className="text-base sm:text-xl text-gray-500 mb-6 sm:mb-8 leading-relaxed animate-fade-in delay-200">
+              TSPay, Paynest, TulovPay, MirPay va QulayPayni bitta API bilan boshqaring. Xavfsiz, tez va ishonchli.
             </p>
 
-            <div className="flex flex-wrap gap-4 mb-10 animate-fade-in delay-300">
-              <Link href="/register" className="inline-flex items-center gap-2 bg-white text-black font-bold px-6 py-3.5 rounded-xl hover:bg-gray-100 transition-all hover:scale-[1.02] active:scale-[0.98] group text-base">
+            <div className="flex flex-col sm:flex-row gap-3 mb-6 sm:mb-10 animate-fade-in delay-300">
+              <Link href="/register" className="inline-flex items-center justify-center gap-2 bg-white text-black font-bold px-6 py-3 sm:py-3.5 rounded-xl hover:bg-gray-100 transition-all hover:scale-[1.02] active:scale-[0.98] group text-sm sm:text-base">
                 Bepul boshlash
-                <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
+                <ArrowRight className="w-4 h-4 sm:w-5 sm:h-5 group-hover:translate-x-1 transition-transform" />
               </Link>
-              <Link href="/login" className="inline-flex items-center gap-2 border border-white/20 text-white font-semibold px-6 py-3.5 rounded-xl hover:bg-white/5 transition-all text-base">
-                <Play className="w-4 h-4" /> Demo ko'rish
+              <Link href="/login" className="inline-flex items-center justify-center gap-2 border border-white/20 text-white font-semibold px-6 py-3 sm:py-3.5 rounded-xl hover:bg-white/5 transition-all text-sm sm:text-base">
+                <Play className="w-4 h-4" /> Kirish
               </Link>
             </div>
 
-            <div className="flex flex-wrap gap-6 animate-fade-in delay-400">
-              {['Bepul boshlash', 'Kredit karta kerak emas', "24/7 qo'llab-quvvatlash"].map(c => (
-                <div key={c} className="flex items-center gap-2">
-                  <CheckCircle className="w-4 h-4 text-green-400 flex-shrink-0" />
-                  <span className="text-sm text-gray-500">{c}</span>
+            <div className="flex flex-wrap gap-3 sm:gap-6 animate-fade-in delay-400">
+              {['Bepul boshlash', 'Kredit karta kerak emas', "24/7 support"].map(c => (
+                <div key={c} className="flex items-center gap-1.5">
+                  <CheckCircle className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-green-400 flex-shrink-0" />
+                  <span className="text-xs sm:text-sm text-gray-500">{c}</span>
                 </div>
               ))}
             </div>
           </div>
 
           {/* dashboard mockup */}
-          <div className="relative animate-fade-in-right delay-200">
+          <div className="relative animate-fade-in-right delay-200 hidden sm:block">
             <div className="bg-[#111] rounded-3xl border border-white/10 overflow-hidden shadow-2xl">
               <div className="bg-[#0a0a0a] px-4 py-3 flex items-center gap-2 border-b border-white/5">
                 <div className="flex gap-1.5">
@@ -233,7 +223,7 @@ export default function LandingPage() {
                   <div className="w-3 h-3 rounded-full bg-green-500/70" />
                 </div>
                 <div className="flex-1 bg-white/5 rounded-md h-5 mx-4 flex items-center px-3">
-                  <span className="text-gray-600 text-xs">app.makerpay.uz/dashboard</span>
+                  <span className="text-gray-600 text-xs">makerpay.uz/dashboard</span>
                 </div>
               </div>
               <div className="p-4 bg-[#0d0d0d]">
@@ -286,7 +276,7 @@ export default function LandingPage() {
             </div>
 
             {/* floating badges */}
-            <div className="absolute -top-4 -right-4 glass rounded-2xl p-3 shadow-lg animate-float delay-100">
+            <div className="absolute -top-4 -right-2 lg:-right-4 glass rounded-2xl p-3 shadow-lg animate-float delay-100">
               <div className="flex items-center gap-2">
                 <div className="w-7 h-7 rounded-full bg-green-900/60 flex items-center justify-center">
                   <TrendingUp className="w-3.5 h-3.5 text-green-400" />
@@ -297,7 +287,7 @@ export default function LandingPage() {
                 </div>
               </div>
             </div>
-            <div className="absolute -bottom-4 -left-4 glass rounded-2xl p-3 shadow-lg animate-float-slow delay-300">
+            <div className="absolute -bottom-4 -left-2 lg:-left-4 glass rounded-2xl p-3 shadow-lg animate-float-slow delay-300">
               <div className="flex items-center gap-2">
                 <div className="w-7 h-7 rounded-full bg-white/10 flex items-center justify-center">
                   <Shield className="w-3.5 h-3.5 text-gray-300" />
@@ -308,7 +298,7 @@ export default function LandingPage() {
                 </div>
               </div>
             </div>
-            <div className="absolute top-1/2 -right-8 -translate-y-1/2 glass rounded-2xl px-3 py-2 animate-float delay-200">
+            <div className="absolute top-1/2 -right-2 lg:-right-6 -translate-y-1/2 glass rounded-2xl px-3 py-2 animate-float delay-200">
               <div className="flex items-center gap-1.5">
                 <div className="w-2 h-2 rounded-full bg-green-400 animate-ping-slow" />
                 <span className="text-xs font-medium text-white">Live</span>
@@ -319,8 +309,8 @@ export default function LandingPage() {
       </section>
 
       {/* ── STATS ── */}
-      <section className="py-14 border-y border-white/5 bg-[#0a0a0a]">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 grid grid-cols-2 md:grid-cols-4 gap-8 text-center">
+      <section className="py-10 sm:py-14 border-y border-white/5 bg-[#0a0a0a]">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 grid grid-cols-2 md:grid-cols-4 gap-6 sm:gap-8 text-center">
           {[
             { v: '99.9%', l: 'Uptime SLA' },
             { v: '5+',    l: "To'lov provayderlari" },
@@ -328,20 +318,20 @@ export default function LandingPage() {
             { v: '24/7',  l: "Qo'llab-quvvatlash" },
           ].map((s, i) => (
             <div key={i} data-reveal data-delay={String((i+1)*100)}>
-              <p className="text-4xl md:text-5xl font-black text-white">{s.v}</p>
-              <p className="text-gray-600 mt-2 text-sm">{s.l}</p>
+              <p className="text-2xl sm:text-4xl md:text-5xl font-black text-white">{s.v}</p>
+              <p className="text-gray-600 mt-1 sm:mt-2 text-xs sm:text-sm">{s.l}</p>
             </div>
           ))}
         </div>
       </section>
 
       {/* ── FEATURES ── */}
-      <section id="features" className="py-24 bg-black">
+      <section id="features" className="py-14 sm:py-24 bg-black">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center mb-16">
-            <span data-reveal className="inline-block bg-white/5 border border-white/10 text-gray-500 text-xs font-semibold px-3 py-1 rounded-full mb-4 uppercase tracking-wide">Xususiyatlar</span>
-            <h2 data-reveal data-delay="100" className="text-4xl md:text-5xl font-extrabold text-white mb-4">Biznesingiz uchun kerakli <span className="text-gray-500">hamma narsa</span></h2>
-            <p data-reveal data-delay="200" className="text-xl text-gray-600 max-w-2xl mx-auto">To'lov integratsiyasidan analitikagacha — MakerPay hamma narsani qamrab oladi.</p>
+          <div className="text-center mb-10 sm:mb-16">
+            <span data-reveal className="inline-block bg-white/5 border border-white/10 text-gray-500 text-xs font-semibold px-3 py-1 rounded-full mb-3 sm:mb-4 uppercase tracking-wide">Xususiyatlar</span>
+            <h2 data-reveal data-delay="100" className="text-2xl sm:text-4xl md:text-5xl font-extrabold text-white mb-3 sm:mb-4">Biznesingiz uchun <span className="text-gray-500">hamma narsa</span></h2>
+            <p data-reveal data-delay="200" className="text-base sm:text-xl text-gray-600 max-w-2xl mx-auto">To'lov integratsiyasidan analitikagacha — MakerPay hamma narsani qamrab oladi.</p>
           </div>
           <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
             {FEATURES.map((f, i) => (
@@ -361,12 +351,12 @@ export default function LandingPage() {
       </section>
 
       {/* ── HOW IT WORKS ── */}
-      <section id="how" className="py-24 bg-[#0a0a0a] relative">
+      <section id="how" className="py-14 sm:py-24 bg-[#0a0a0a] relative">
         <div className="absolute top-0 left-0 w-full h-px bg-gradient-to-r from-transparent via-white/10 to-transparent" />
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center mb-16">
-            <span data-reveal className="inline-block bg-white/5 border border-white/10 text-gray-500 text-xs font-semibold px-3 py-1 rounded-full mb-4 uppercase tracking-wide">Qanday ishlaydi</span>
-            <h2 data-reveal data-delay="100" className="text-4xl md:text-5xl font-extrabold text-white mb-4">4 qadamda <span className="text-gray-500">boshlang</span></h2>
+          <div className="text-center mb-10 sm:mb-16">
+            <span data-reveal className="inline-block bg-white/5 border border-white/10 text-gray-500 text-xs font-semibold px-3 py-1 rounded-full mb-3 sm:mb-4 uppercase tracking-wide">Qanday ishlaydi</span>
+            <h2 data-reveal data-delay="100" className="text-2xl sm:text-4xl md:text-5xl font-extrabold text-white mb-3 sm:mb-4">4 qadamda <span className="text-gray-500">boshlang</span></h2>
           </div>
           <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-8 relative">
             <div className="hidden lg:block absolute top-10 left-[12.5%] right-[12.5%] h-px bg-gradient-to-r from-white/5 via-white/15 to-white/5" />
@@ -392,11 +382,11 @@ export default function LandingPage() {
       </section>
 
       {/* ── PROVIDERS ── */}
-      <section id="providers" className="py-24 bg-black">
+      <section id="providers" className="py-14 sm:py-24 bg-black">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center mb-16">
-            <span data-reveal className="inline-block bg-white/5 border border-white/10 text-gray-500 text-xs font-semibold px-3 py-1 rounded-full mb-4 uppercase tracking-wide">Provayderlar</span>
-            <h2 data-reveal data-delay="100" className="text-4xl md:text-5xl font-extrabold text-white mb-4">Barcha yetakchi <span className="text-gray-500">provayderlar</span></h2>
+          <div className="text-center mb-10 sm:mb-16">
+            <span data-reveal className="inline-block bg-white/5 border border-white/10 text-gray-500 text-xs font-semibold px-3 py-1 rounded-full mb-3 sm:mb-4 uppercase tracking-wide">Provayderlar</span>
+            <h2 data-reveal data-delay="100" className="text-2xl sm:text-4xl md:text-5xl font-extrabold text-white mb-3 sm:mb-4">Barcha yetakchi <span className="text-gray-500">provayderlar</span></h2>
             <p data-reveal data-delay="200" className="text-xl text-gray-600 max-w-2xl mx-auto">O'zbekistonning eng yirik to'lov provayderlari bitta joyda.</p>
           </div>
 
@@ -456,14 +446,42 @@ export default function LandingPage() {
       </section>
 
       {/* ── PRICING ── */}
-      <section id="pricing" className="py-24 bg-[#0a0a0a] relative">
+      <section id="pricing" className="py-14 sm:py-24 bg-[#0a0a0a] relative">
         <div className="absolute top-0 left-0 w-full h-px bg-gradient-to-r from-transparent via-white/10 to-transparent" />
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center mb-16">
-            <span data-reveal className="inline-block bg-white/5 border border-white/10 text-gray-500 text-xs font-semibold px-3 py-1 rounded-full mb-4 uppercase tracking-wide">Tariflar</span>
-            <h2 data-reveal data-delay="100" className="text-4xl md:text-5xl font-extrabold text-white mb-4">
-              Biznesingiz o'lchamiga mos <span className="text-gray-500">tarif tanlang</span>
+          <div className="text-center mb-10 sm:mb-16">
+            <span data-reveal className="inline-block bg-white/5 border border-white/10 text-gray-500 text-xs font-semibold px-3 py-1 rounded-full mb-3 sm:mb-4 uppercase tracking-wide">Tariflar</span>
+            <h2 data-reveal data-delay="100" className="text-2xl sm:text-4xl md:text-5xl font-extrabold text-white mb-3 sm:mb-4">
+              O'lchamingizga mos <span className="text-gray-500">tarif tanlang</span>
             </h2>
+          </div>
+
+          {/* Storage addon card */}
+          <div className="mb-6 bg-gradient-to-r from-cyan-500/10 to-blue-500/10 border border-cyan-500/20 rounded-2xl p-5 flex flex-col sm:flex-row items-start sm:items-center gap-4">
+            <div className="w-10 h-10 rounded-xl bg-cyan-500/20 flex items-center justify-center shrink-0">
+              <svg className="w-5 h-5 text-cyan-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 12h14M12 5l7 7-7 7" /></svg>
+            </div>
+            <div className="flex-1">
+              <p className="text-sm font-bold text-white">Storage — qo'shimcha xarid</p>
+              <p className="text-xs text-gray-400 mt-0.5">Har bir tarifga alohida storage qo'shish mumkin</p>
+            </div>
+            <div className="flex gap-3 flex-wrap">
+              <div className="bg-white/5 border border-white/10 rounded-xl px-4 py-2.5 text-center">
+                <p className="text-xs text-gray-500">Free</p>
+                <p className="text-sm font-bold text-white">512 MB</p>
+                <p className="text-xs text-green-400">Bepul</p>
+              </div>
+              <div className="bg-cyan-500/10 border border-cyan-500/30 rounded-xl px-4 py-2.5 text-center">
+                <p className="text-xs text-gray-400">Basic</p>
+                <p className="text-sm font-bold text-white">5 GB</p>
+                <p className="text-xs text-cyan-400">10 000 so'm/oy</p>
+              </div>
+              <div className="bg-blue-500/10 border border-blue-500/30 rounded-xl px-4 py-2.5 text-center">
+                <p className="text-xs text-gray-400">Pro</p>
+                <p className="text-sm font-bold text-white">50 GB</p>
+                <p className="text-xs text-blue-400">49 000 so'm/oy</p>
+              </div>
+            </div>
           </div>
 
           <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
@@ -516,29 +534,29 @@ export default function LandingPage() {
       </section>
 
       {/* ── CTA ── */}
-      <section className="py-24 bg-white relative overflow-hidden">
+      <section className="py-14 sm:py-24 bg-white relative overflow-hidden">
         <div className="absolute inset-0 opacity-[0.04]"
           style={{ backgroundImage: 'radial-gradient(circle, black 1px, transparent 1px)', backgroundSize: '32px 32px' }} />
         <div className="relative max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-          <div data-reveal className="inline-flex items-center gap-2 bg-black/5 border border-black/10 rounded-full px-4 py-1.5 mb-6">
+          <div data-reveal className="inline-flex items-center gap-2 bg-black/5 border border-black/10 rounded-full px-4 py-1.5 mb-4 sm:mb-6">
             <Star className="w-4 h-4 text-yellow-500 fill-current" />
             <span className="text-black/60 text-xs font-medium">Bugun bepul boshlang</span>
           </div>
-          <h2 data-reveal data-delay="100" className="text-4xl md:text-6xl font-extrabold text-black mb-6">
+          <h2 data-reveal data-delay="100" className="text-2xl sm:text-4xl md:text-6xl font-extrabold text-black mb-4 sm:mb-6">
             Biznesingizni{' '}
             <span className="text-gray-400">keyingi bosqichga</span>{' '}
             olib chiqing
           </h2>
-          <p data-reveal data-delay="200" className="text-xl text-gray-500 mb-10">
-            Minglab kompaniyalar MakerPay orqali to'lovlarini avtomatlashtirmoqda. Siz ham qo'shiling.
+          <p data-reveal data-delay="200" className="text-base sm:text-xl text-gray-500 mb-6 sm:mb-10">
+            MakerPay orqali to'lovlarini avtomatlashtiring.
           </p>
-          <div data-reveal data-delay="300" className="flex flex-wrap justify-center gap-4">
+          <div data-reveal data-delay="300" className="flex flex-col sm:flex-row justify-center gap-3 sm:gap-4">
             <Link href="/register"
-              className="inline-flex items-center gap-2 bg-black text-white font-bold px-8 py-4 rounded-xl hover:bg-gray-900 transition-all hover:scale-[1.03] active:scale-[0.98] shadow-xl text-base">
+              className="inline-flex items-center justify-center gap-2 bg-black text-white font-bold px-6 sm:px-8 py-3.5 sm:py-4 rounded-xl hover:bg-gray-900 transition-all hover:scale-[1.03] active:scale-[0.98] shadow-xl text-sm sm:text-base">
               Bepul ro'yxatdan o'tish <ChevronRight className="w-5 h-5" />
             </Link>
             <Link href="/login"
-              className="inline-flex items-center gap-2 border-2 border-black/10 text-black font-semibold px-8 py-4 rounded-xl hover:bg-black/5 transition-all text-base">
+              className="inline-flex items-center justify-center gap-2 border-2 border-black/10 text-black font-semibold px-6 sm:px-8 py-3.5 sm:py-4 rounded-xl hover:bg-black/5 transition-all text-sm sm:text-base">
               Kirish
             </Link>
           </div>
@@ -549,7 +567,7 @@ export default function LandingPage() {
       <footer className="bg-black border-t border-white/5 py-10">
         <div data-reveal className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col md:flex-row items-center justify-between gap-4">
           <div className="flex items-center gap-3">
-            <div className="w-8 h-8 rounded-lg overflow-hidden border border-white/10 shrink-0" style={{width:32,height:32}}>
+            <div className="w-8 h-8 rounded-lg overflow-hidden border border-white/10 shrink-0">
               <img src="/logo.png" alt="MakerPay" style={{width:32,height:32,objectFit:'contain',background:'#000'}} />
             </div>
             <span className="font-bold text-white text-lg">MakerPay</span>

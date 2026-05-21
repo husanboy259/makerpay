@@ -1,96 +1,226 @@
-# MakerPay — O'rnatish qo'llanmasi
+# MakerPay — To'liq ishga tushurish qo'llanmasi
 
-## VPS ga o'rnatish
+---
 
-### 1. Server tayyorlash (Ubuntu 22.04)
+## LOCAL (Development)
+
+### Backend
 ```bash
-sudo apt update && sudo apt upgrade -y
-sudo apt install -y nginx certbot python3-certbot-nginx docker.io docker-compose nodejs npm git
+cd makerpay/backend
+npm install
+npm run start:dev
+```
+> Ishlamasa: `npx ts-node -r tsconfig-paths/register src/main.ts`
 
-# PostgreSQL
-sudo apt install -y postgresql postgresql-contrib
-sudo -u postgres psql -c "CREATE USER makerpay_user WITH PASSWORD 'your_password';"
-sudo -u postgres psql -c "CREATE DATABASE makerpay OWNER makerpay_user;"
+### Frontend
+```bash
+cd makerpay/frontend
+npm install
+npm run dev
 ```
 
-### 2. Loyihani yuklash
+**Brauzerda:**
+- Frontend: `http://localhost:3000`
+- API: `http://localhost:3001`
+- Swagger: `http://localhost:3001/api/docs`
+
+---
+
+## SERVER (Production)
+
+### 1. Serverga kirish
+```bash
+ssh username@server_ip
+```
+
+### 2. Loyihani yuklab olish
 ```bash
 cd /var/www
-git clone https://your-repo/makerpay.git
-cd makerpay
-```
-
-### 3. Backend sozlash
-```bash
-cd backend
-cp .env.example .env
-nano .env   # O'zingizning qiymatlarni kiriting
-
+git clone https://github.com/your-repo/makerpay.git
+cd makerpay/makerpay/backend
 npm install
-npm run build
 ```
 
-### 4. Frontend sozlash
+### 3. .env sozlash
 ```bash
-cd ../frontend
-cp .env.example .env.local
-# NEXT_PUBLIC_API_URL=https://api.makerpay.uz/api/v1
+nano .env
+```
+```env
+NODE_ENV=production
+PORT=3001
+FRONTEND_URL=https://makerpay.uz
 
-npm install
-npm run build
+DB_HOST=your-supabase-host
+DB_PORT=5432
+DB_USER=postgres.your_project
+DB_PASSWORD=your_password
+DB_NAME=postgres
+DB_SSL=true
+
+JWT_SECRET=your_32char_secret
+ENCRYPTION_KEY=your_32char_key
+
+SMTP_HOST=smtp.gmail.com
+SMTP_PORT=587
+SMTP_USER=your@gmail.com
+SMTP_PASS=your_app_password
+
+GOOGLE_CLIENT_ID=your_google_client_id
+GOOGLE_CLIENT_SECRET=your_google_client_secret
+GOOGLE_CALLBACK_URL=https://api.makerpay.uz/api/v1/auth/google/callback
 ```
 
-### 5. PM2 bilan ishga tushirish
+### 4. Build qilish
 ```bash
-npm install -g pm2
+# nest-cli.json yangilash
+cat > nest-cli.json << 'EOF'
+{
+  "$schema": "https://json.schemastore.org/nest-cli",
+  "collection": "@nestjs/schematics",
+  "sourceRoot": "src",
+  "compilerOptions": {
+    "deleteOutDir": true,
+    "outDir": "dist",
+    "tsConfigPath": "tsconfig.json"
+  }
+}
+EOF
 
-# Backend
-cd /var/www/makerpay/backend
+# tsconfig.build.json yaratish
+cat > tsconfig.build.json << 'EOF'
+{
+  "extends": "./tsconfig.json",
+  "exclude": ["node_modules", "dist", "test", "**/*spec.ts"]
+}
+EOF
+
+# Build
+npm run build
+
+# Tekshirish
+ls dist/
+```
+
+### 5. PM2 bilan ishga tushurish (Backend)
+```bash
+pm2 delete makerpay-api 2>/dev/null; true
 pm2 start dist/main.js --name makerpay-api
-
-# Frontend
-cd /var/www/makerpay/frontend
-pm2 start npm --name makerpay-web -- start
-
 pm2 save
 pm2 startup
 ```
 
-### 6. Nginx sozlash
+### 6. Frontend build va ishga tushurish
 ```bash
-sudo cp /var/www/makerpay/nginx.conf /etc/nginx/sites-available/makerpay
+cd /var/www/makerpay/makerpay/frontend
+npm install
+
+# .env.local
+echo "NEXT_PUBLIC_API_URL=https://api.makerpay.uz/api/v1" > .env.local
+
+npm run build
+pm2 start npm --name makerpay-frontend -- start
+pm2 save
+```
+
+### 7. PM2 status tekshirish
+```bash
+pm2 status
+pm2 logs makerpay-api --lines 50
+```
+
+---
+
+## NGINX sozlash
+
+```bash
+sudo nano /etc/nginx/sites-available/makerpay
+```
+
+```nginx
+# Backend API
+server {
+    listen 80;
+    server_name api.makerpay.uz;
+
+    location / {
+        proxy_pass http://localhost:3001;
+        proxy_http_version 1.1;
+        proxy_set_header Upgrade $http_upgrade;
+        proxy_set_header Connection 'upgrade';
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+    }
+}
+
+# Frontend
+server {
+    listen 80;
+    server_name makerpay.uz www.makerpay.uz;
+
+    location / {
+        proxy_pass http://localhost:3000;
+        proxy_http_version 1.1;
+        proxy_set_header Upgrade $http_upgrade;
+        proxy_set_header Connection 'upgrade';
+        proxy_set_header Host $host;
+    }
+}
+```
+
+```bash
 sudo ln -s /etc/nginx/sites-available/makerpay /etc/nginx/sites-enabled/
 sudo nginx -t
 sudo systemctl reload nginx
 ```
 
-### 7. SSL sertifikat
+---
+
+## SSL (HTTPS)
+
 ```bash
-sudo certbot --nginx -d makerpay.uz -d www.makerpay.uz
-sudo certbot --nginx -d api.makerpay.uz
+sudo apt install certbot python3-certbot-nginx -y
+sudo certbot --nginx -d makerpay.uz -d www.makerpay.uz -d api.makerpay.uz
 ```
 
-### 8. Birinchi admin yaratish
+---
+
+## Yangilash (Update)
+
+```bash
+cd /var/www/makerpay
+git pull
+
+# Backend
+cd makerpay/backend
+npm install
+npm run build
+pm2 restart makerpay-api --update-env
+
+# Frontend
+cd ../frontend
+npm install
+npm run build
+pm2 restart makerpay-frontend
+```
+
+---
+
+## Muammolar
+
+| Muammo | Yechim |
+|--------|--------|
+| `dist` yaratilmaydi | `cat > tsconfig.build.json` (yuqorida) |
+| DB ulanmaydi | `.env` da `DB_PASSWORD` to'g'ri yozing |
+| Port band | `pm2 delete all` → qayta ishga tushuring |
+| PM2 restart bo'lmaydi | `pm2 restart app --update-env` |
+| Google OAuth ishlamaydi | Google Console da redirect URI qo'shing |
+
+---
+
+## Admin yaratish
+
+Supabase SQL Editor:
 ```sql
--- PostgreSQL da:
 UPDATE users SET role = 'admin' WHERE email = 'your@email.com';
-```
-
-## .env faylida to'ldirish kerak bo'lgan qiymatlar
-
-| Kalit | Tavsif |
-|-------|--------|
-| DB_PASSWORD | PostgreSQL parol |
-| JWT_SECRET | Kamida 64 ta belgidan iborat tasodifiy qator |
-| ENCRYPTION_KEY | Aynan 32 ta belgi |
-| FRONTEND_URL | https://makerpay.uz |
-
-### JWT_SECRET yaratish:
-```bash
-node -e "console.log(require('crypto').randomBytes(64).toString('hex'))"
-```
-
-### ENCRYPTION_KEY yaratish:
-```bash
-node -e "console.log(require('crypto').randomBytes(16).toString('hex'))"
 ```

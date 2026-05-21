@@ -14,8 +14,12 @@ export class MarketsService {
     return this.repo.find({ where: { merchantId }, order: { createdAt: 'DESC' } });
   }
 
-  create(merchantId: string, data: { name: string; url: string; webhookUrl: string; description?: string }) {
-    const market = this.repo.create({ merchantId, ...data });
+  findAllAdmin() {
+    return this.repo.find({ order: { createdAt: 'DESC' } });
+  }
+
+  create(merchantId: string, data: { name: string; url: string; webhookUrl?: string; webhookUrl2?: string; logoUrl?: string; description?: string }) {
+    const market = this.repo.create({ merchantId, ...data, status: 'pending' });
     return this.repo.save(market);
   }
 
@@ -31,5 +35,19 @@ export class MarketsService {
     if (!market) throw new NotFoundException('Market not found');
     await this.repo.remove(market);
     return { message: 'Deleted' };
+  }
+
+  async adminApprove(id: string) {
+    const market = await this.repo.findOne({ where: { id } });
+    if (!market) throw new NotFoundException('Market not found');
+    market.status = 'active';
+    return this.repo.save(market);
+  }
+
+  async adminReject(id: string) {
+    const market = await this.repo.findOne({ where: { id } });
+    if (!market) throw new NotFoundException('Market not found');
+    market.status = 'rejected';
+    return this.repo.save(market);
   }
 }

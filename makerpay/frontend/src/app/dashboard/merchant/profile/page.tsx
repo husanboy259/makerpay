@@ -42,6 +42,7 @@ const selectCls = `${inputCls} cursor-pointer`;
 export default function ProfilePage() {
   const { user, updateUser } = useAuthStore();
   const [saved, setSaved] = useState<string | null>(null);
+  const [saveError, setSaveError] = useState('');
   const [pwdError, setPwdError] = useState('');
 
   const [profileForm, setProfileForm] = useState({
@@ -61,7 +62,8 @@ export default function ProfilePage() {
 
   const { data: merchant } = useQuery({
     queryKey: ['merchant-me'],
-    queryFn: () => merchantsApi.getMe(),
+    queryFn: () => merchantsApi.getMe().catch(() => null),
+    retry: false,
   });
 
   useEffect(() => {
@@ -103,11 +105,14 @@ export default function ProfilePage() {
   };
 
   const saveMerchant = async () => {
+    setSaveError('');
     try {
       if ((merchant as any)?.id) await merchantsApi.update(merchantForm);
       else await merchantsApi.create(merchantForm);
       flash('merchant');
-    } catch {}
+    } catch (e: any) {
+      setSaveError(e?.response?.data?.message || e?.message || 'Saqlashda xatolik');
+    }
   };
 
   const changePwd = async () => {
@@ -287,6 +292,11 @@ export default function ProfilePage() {
           </div>
         </div>
 
+        {saveError && (
+          <div className="mt-3 p-3 bg-red-500/10 border border-red-500/20 text-red-400 text-sm rounded-xl">
+            {saveError}
+          </div>
+        )}
         <SaveBtn id="merchant" />
       </Section>
 

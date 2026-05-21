@@ -5,14 +5,6 @@ import { merchantsApi } from '@/lib/api';
 import { Users, CheckCircle, XCircle, Clock, Search, Eye, Building2 } from 'lucide-react';
 import { formatDate } from '@/lib/utils';
 
-const MOCK: any[] = [
-  { id: 'm1', businessName: 'TechShop UZ',   status: 'active',                contactEmail: 'tech@shop.uz',    contactPhone: '+998901000001', createdAt: '2026-03-10T08:00:00Z', totalVolume: 4500000, totalTransactions: 312 },
-  { id: 'm2', businessName: 'Online Market', status: 'pending_verification',   contactEmail: 'info@market.uz',  contactPhone: '+998901000002', createdAt: '2026-04-18T10:00:00Z', totalVolume: 0,       totalTransactions: 0   },
-  { id: 'm3', businessName: 'Delivery Co',   status: 'active',                contactEmail: 'ops@delivery.uz', contactPhone: '+998901000003', createdAt: '2026-02-01T08:00:00Z', totalVolume: 2100000, totalTransactions: 189 },
-  { id: 'm4', businessName: 'Fashion Store', status: 'active',                contactEmail: 'hi@fashion.uz',   contactPhone: '+998901000004', createdAt: '2026-01-15T08:00:00Z', totalVolume: 1800000, totalTransactions: 156 },
-  { id: 'm5', businessName: 'FoodChain UZ',  status: 'suspended',             contactEmail: 'ops@food.uz',     contactPhone: '+998901000005', createdAt: '2025-12-01T08:00:00Z', totalVolume: 300000,  totalTransactions: 45  },
-  { id: 'm6', businessName: 'GameStore UZ',  status: 'pending_verification',   contactEmail: 'gs@game.uz',      contactPhone: '+998901000006', createdAt: '2026-04-19T14:00:00Z', totalVolume: 0,       totalTransactions: 0   },
-];
 
 const sCls: Record<string,string> = {
   active:               'bg-green-500/10 text-green-400 border-green-500/20',
@@ -40,7 +32,7 @@ export default function AdminMerchantsPage() {
   const qc = useQueryClient();
 
   const { data: raw } = useQuery({ queryKey: ['admin-merchants'], queryFn: () => merchantsApi.getAll(), retry: false });
-  const merchants: any[] = (raw as any)?.data || (Array.isArray(raw) ? (raw as any[]) : MOCK);
+  const merchants: any[] = (raw as any)?.data || (Array.isArray(raw) ? (raw as any[]) : []);
   const approve = useMutation({ mutationFn: (id: string) => merchantsApi.approve(id), onSuccess: () => qc.invalidateQueries({ queryKey: ['admin-merchants'] }) });
   const suspend = useMutation({ mutationFn: (id: string) => merchantsApi.suspend(id, 'Admin tomonidan bloklandi'), onSuccess: () => qc.invalidateQueries({ queryKey: ['admin-merchants'] }) });
 
