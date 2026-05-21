@@ -7,7 +7,6 @@ import {
   Copy, Check, Trash2, AlertCircle, Clock, CheckCircle, XCircle,
   Image, Code2,
 } from 'lucide-react';
-import { providersApi } from '@/lib/api';
 
 const API_BASE = process.env.NEXT_PUBLIC_API_URL || 'https://api.makerpay.uz/api/v1';
 
