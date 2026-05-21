@@ -59,8 +59,11 @@ export default function LoginPage() {
 
       <div className="w-full max-w-md relative z-10">
 
-        <div className="text-center mb-5 animate-fade-in">
-          <h1 className="text-2xl font-black text-white tracking-tight">MakerPay</h1>
+        <div className="text-center mb-5 animate-fade-in flex flex-col items-center gap-2">
+          <div className="w-16 h-16 rounded-2xl overflow-hidden border border-white/10 shadow-2xl">
+            <img src="/logo.png" alt="MakerPay" className="w-full h-full object-cover" />
+          </div>
+          <span className="text-lg font-bold text-white tracking-tight">MakerPay</span>
         </div>
 
         {/* Card */}
