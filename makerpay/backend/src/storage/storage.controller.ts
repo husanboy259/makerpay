@@ -2,6 +2,7 @@ import {
   Controller, Get, Post, Delete, Param, UseGuards, Req,
   UseInterceptors, UploadedFile, Body, BadRequestException, Res,
 } from '@nestjs/common';
+import { Throttle } from '@nestjs/throttler';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { StorageService } from './storage.service';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
@@ -43,6 +44,7 @@ export class StorageController {
   }
 
   @Post('upload')
+  @Throttle({ short: { ttl: 1000, limit: 50 } })
   @UseInterceptors(FileInterceptor('file', { storage: memStorage(), limits: { fileSize: 50 * 1024 * 1024 } }))
   uploadFile(@Req() req: any, @UploadedFile() file: Express.Multer.File) {
     return this.service.uploadFile(req.user.id, file);
