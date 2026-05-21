@@ -294,7 +294,12 @@ export default function DeployPage() {
                   cat
                 </button>
                 <button
-                  onClick={() => setSelected(null)}
+                  onClick={async () => {
+                    if (!confirm(`"${selected.name}" ni o'chirasizmi?`)) return;
+                    await storageApi.deleteWorkspaceFile(selected.path).catch(() => {});
+                    setSelected(null);
+                    qc.invalidateQueries({ queryKey: ['workspace-files'] });
+                  }}
                   className="p-2 rounded-lg bg-white/5 border border-white/10 text-gray-600 hover:text-red-400 transition-all">
                   <Trash2 className="w-3.5 h-3.5" />
                 </button>

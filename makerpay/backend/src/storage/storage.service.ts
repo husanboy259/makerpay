@@ -143,6 +143,15 @@ export class StorageService {
     });
   }
 
+  async deleteLocalFile(userId: string, filePath: string) {
+    const dir = this.userDir(userId);
+    const safePath = filePath.replace(/\.\.\//g, '').replace(/^\//, '');
+    const fullPath = join(dir, safePath);
+    if (!fullPath.startsWith(dir)) throw new Error('Invalid path');
+    await unlink(fullPath).catch(() => {});
+    return { message: 'Deleted' };
+  }
+
   async executeCommand(userId: string, command: string) {
     const cmd = command.trim();
     if (!cmd) return { output: '', exitCode: 0 };

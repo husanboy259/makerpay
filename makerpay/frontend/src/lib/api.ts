@@ -99,6 +99,7 @@ export const storageApi = {
   uploadLocal:       (file: File)   => { const f = new FormData(); f.append('file', file); return api.post('/storage/workspace/upload', f); },
   uploadZip:         (file: File)   => { const f = new FormData(); f.append('file', file); return api.post('/storage/workspace/upload-zip', f); },
   exec:              (command: string) => api.post('/storage/workspace/exec', { command }),
+  deleteWorkspaceFile: (path: string) => api.delete('/storage/workspace/files', { data: { path } }),
 };
 
 // ─── Webhooks ─────────────────────────────────────────────────────────────────

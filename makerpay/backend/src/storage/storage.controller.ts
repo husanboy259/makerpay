@@ -62,4 +62,10 @@ export class StorageController {
     if (!body?.command?.trim()) throw new BadRequestException('Command is required');
     return this.service.executeCommand(req.user.id, body.command);
   }
+
+  @Delete('workspace/files')
+  async deleteWorkspaceFile(@Req() req: any, @Body() body: { path: string }) {
+    if (!body?.path) throw new BadRequestException('Path is required');
+    return this.service.deleteLocalFile(req.user.id, body.path);
+  }
 }
