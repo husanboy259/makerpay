@@ -16,6 +16,7 @@ import { SupportModule } from './support/support.module';
 import { AdsModule } from './ads/ads.module';
 import { SubscriptionsModule } from './subscriptions/subscriptions.module';
 import { WithdrawalsModule } from './withdrawals/withdrawals.module';
+import { StorageModule } from './storage/storage.module';
 import configuration from './config/configuration';
 
 @Module({
@@ -63,6 +64,7 @@ import configuration from './config/configuration';
     AdsModule,
     SubscriptionsModule,
     WithdrawalsModule,
+    StorageModule,
   ],
 })
 export class AppModule {}
