@@ -6,6 +6,8 @@ import { mkdir, writeFile, unlink, readdir, lstat } from 'fs/promises';
 import { join, relative, basename } from 'path';
 import { StorageFile } from './storage-file.entity';
 
+const UPLOADS_BASE = process.env.UPLOADS_DIR || '/tmp/makerpay-uploads';
+
 const FREE_QUOTA = 512 * 1024 * 1024; // 512 MB
 
 const BLOCKED_PATTERNS = [
@@ -59,24 +61,15 @@ export class StorageService {
     const stats = await this.getStats(userId);
     if (stats.used + file.size > FREE_QUOTA) throw new Error('Storage quota exceeded');
 
-    const supabaseUrl = process.env.SUPABASE_URL;
-    const supabaseKey = process.env.SUPABASE_SERVICE_KEY || process.env.SUPABASE_ANON_KEY;
-    const bucket = 'user-files';
-    const path = `${userId}/${Date.now()}_${file.originalname.replace(/[^a-zA-Z0-9._-]/g, '_')}`;
+    const userUploadDir = join(UPLOADS_BASE, userId);
+    await mkdir(userUploadDir, { recursive: true });
 
-    const res = await fetch(`${supabaseUrl}/storage/v1/object/${bucket}/${path}`, {
-      method: 'POST',
-      headers: {
-        Authorization: `Bearer ${supabaseKey}`,
-        'Content-Type': file.mimetype,
-        'x-upsert': 'true',
-      },
-      body: file.buffer as any,
-    });
+    const safeName = `${Date.now()}_${file.originalname.replace(/[^a-zA-Z0-9._-]/g, '_')}`;
+    await writeFile(join(userUploadDir, safeName), file.buffer);
 
-    if (!res.ok) throw new Error(`Upload failed: ${await res.text()}`);
+    const baseUrl = process.env.BASE_URL || 'https://api.makerpay.uz';
+    const fileUrl = `${baseUrl}/api/v1/storage/serve/${userId}/${safeName}`;
 
-    const fileUrl = `${supabaseUrl}/storage/v1/object/public/${bucket}/${path}`;
     const entity = this.repo.create({ userId, fileName: file.originalname, fileUrl, fileSize: file.size, mimeType: file.mimetype });
     return this.repo.save(entity);
   }

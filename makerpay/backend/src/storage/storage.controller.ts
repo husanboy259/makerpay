@@ -1,12 +1,29 @@
 import {
   Controller, Get, Post, Delete, Param, UseGuards, Req,
-  UseInterceptors, UploadedFile, Body, BadRequestException,
+  UseInterceptors, UploadedFile, Body, BadRequestException, Res,
 } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { StorageService } from './storage.service';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
+import { join } from 'path';
+import { createReadStream, existsSync } from 'fs';
+import type { Response } from 'express';
+
+const UPLOADS_BASE = process.env.UPLOADS_DIR || '/tmp/makerpay-uploads';
 
 const memStorage = require('multer').memoryStorage;
+
+// ─── Public file serving (no auth) ──────────────────────────────────────────
+@Controller('storage/serve')
+export class StorageServeController {
+  @Get(':userId/:filename')
+  serveFile(@Param('userId') userId: string, @Param('filename') filename: string, @Res() res: Response) {
+    const safeName = filename.replace(/[^a-zA-Z0-9._-]/g, '_');
+    const filePath = join(UPLOADS_BASE, userId, safeName);
+    if (!existsSync(filePath)) return res.status(404).json({ message: 'File not found' });
+    return createReadStream(filePath).pipe(res as any);
+  }
+}
 
 @Controller('storage')
 @UseGuards(JwtAuthGuard)
