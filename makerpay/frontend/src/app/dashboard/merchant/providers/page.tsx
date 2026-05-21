@@ -14,10 +14,12 @@ const PROVIDER_META: Record<string, {
   name: string; slug: string; color: string; bg: string; border: string;
   tagline: string; features: string[]; site: string;
   type: ProviderType;
+  hasMakerpayOption?: boolean;
   logo: React.ReactNode;
 }> = {
   tspay: {
     name: 'TSPay', slug: 'tspay', site: 'tspay.uz', type: 'user',
+    hasMakerpayOption: true,
     color: 'text-blue-400', bg: 'bg-blue-500/10', border: 'border-blue-500/30',
     tagline: "O'zbekistoning ishonchli to'lov platforma",
     features: ["To'lov sahifasi", 'Webhook', 'Refund', 'API'],
@@ -27,6 +29,7 @@ const PROVIDER_META: Record<string, {
   },
   qulaypay: {
     name: 'QulayPay', slug: 'qulaypay', site: 'qulaypay.uz', type: 'user',
+    hasMakerpayOption: true,
     color: 'text-cyan-400', bg: 'bg-cyan-500/10', border: 'border-cyan-500/30',
     tagline: "Eng qulay to'lov tizimi — 15 daqiqada integratsiya",
     features: ['Click & Payme', 'Bank kartasi', 'API', 'Webhook'],
@@ -296,10 +299,26 @@ function ProviderCard({
             : <><Zap className="w-4 h-4" />Makerpay orqali faollashtirish</>
           }
         </button>
+      ) : p.hasMakerpayOption ? (
+        <div className="space-y-2">
+          <button
+            onClick={() => onActivate(p.slug)}
+            disabled={activatingSlug === p.slug}
+            className="w-full py-2.5 rounded-xl text-sm font-semibold border border-amber-500/30 text-amber-400 bg-amber-500/5 hover:bg-amber-500/10 transition-all flex items-center justify-center gap-2">
+            {activatingSlug === p.slug
+              ? <><Loader2 className="w-4 h-4 animate-spin" />Faollashtirilmoqda...</>
+              : <><Shield className="w-4 h-4" />MakerPay API xizmati orqali</>
+            }
+          </button>
+          <button onClick={onConnect}
+            className={`w-full py-2.5 rounded-xl text-sm font-semibold border transition-all ${p.border} ${p.color} bg-transparent hover:${p.bg}`}>
+            + O&apos;z API kalitim bilan ulash
+          </button>
+        </div>
       ) : (
         <button onClick={onConnect}
           className={`w-full py-2.5 rounded-xl text-sm font-semibold border transition-all hover:scale-[1.01] ${p.border} ${p.color} bg-transparent hover:${p.bg}`}>
-          + O'z API kalitim bilan ulash
+          + O&apos;z API kalitim bilan ulash
         </button>
       )}
     </div>

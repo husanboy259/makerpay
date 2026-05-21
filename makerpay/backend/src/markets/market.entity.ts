@@ -14,11 +14,20 @@ export class Market {
   @Column({ name: 'url', type: 'varchar', length: 500 })
   url: string;
 
-  @Column({ name: 'webhook_url', type: 'varchar', length: 500 })
+  @Column({ name: 'webhook_url', type: 'varchar', length: 500, nullable: true })
   webhookUrl: string;
+
+  @Column({ name: 'webhook_url_2', type: 'varchar', length: 500, nullable: true })
+  webhookUrl2: string;
+
+  @Column({ name: 'logo_url', type: 'varchar', length: 1000, nullable: true })
+  logoUrl: string;
 
   @Column({ name: 'description', type: 'text', nullable: true })
   description: string;
+
+  @Column({ name: 'status', type: 'varchar', length: 20, default: 'pending' })
+  status: string;
 
   @Column({ name: 'webhook_status', type: 'varchar', length: 20, nullable: true })
   webhookStatus: string;
