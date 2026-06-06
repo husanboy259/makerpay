@@ -324,6 +324,26 @@ export class PaymentsService {
     return { ...payment, status: newStatus };
   }
 
+  async recordMarketTransaction(body: any) {
+    const payment = this.paymentRepo.create({
+      merchantId: body.merchantId || body.marketId || '',
+      amount: body.amount || 0,
+      currency: body.currency || 'UZS',
+      description: body.description || 'Market transaction',
+      externalOrderId: body.externalOrderId,
+      customerName: body.customerName,
+      customerPhone: body.customerPhone,
+      customerEmail: body.customerEmail,
+      customerId: body.customerId,
+      providerName: body.providerName || 'market',
+      idempotencyKey: body.idempotencyKey || uuidv4(),
+      status: PaymentStatus.COMPLETED,
+      metadata: body.metadata || {},
+      paidAt: new Date(),
+    });
+    return this.paymentRepo.save(payment);
+  }
+
   private mapProviderStatus(status: string): PaymentStatus {
     const map: Record<string, PaymentStatus> = {
       pending: PaymentStatus.PENDING,
