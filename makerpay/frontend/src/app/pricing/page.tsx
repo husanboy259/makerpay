@@ -1,6 +1,8 @@
 'use client';
+import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { CheckCircle, ArrowLeft, Zap, Crown } from 'lucide-react';
+import { useAuthStore } from '@/store/auth.store';
 
 const PLANS = [
   {
@@ -60,6 +62,25 @@ const PLANS = [
 ];
 
 export default function PricingPage() {
+  const { token } = useAuthStore();
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => setMounted(true), []);
+  const isLoggedIn = mounted && !!token;
+
+  const getCtaLink = (plan: typeof PLANS[0]) => {
+    if (isLoggedIn && ['basic', 'standard', 'business', 'enterprise'].includes(plan.key)) {
+      return `/dashboard/merchant/upgrade?plan=${plan.key}`;
+    }
+    return plan.ctaLink;
+  };
+
+  const getCtaLabel = (plan: typeof PLANS[0]) => {
+    if (isLoggedIn && ['basic', 'standard', 'business', 'enterprise'].includes(plan.key)) {
+      return "Tarif sotib olish";
+    }
+    return plan.cta;
+  };
+
   return (
     <div className="min-h-screen bg-black text-white">
       {/* Nav */}
@@ -68,7 +89,11 @@ export default function PricingPage() {
           <img src="/logo.png" alt="MakerPay" className="w-8 h-8 rounded-xl" onError={e => e.currentTarget.style.display='none'} />
           <span className="font-black text-lg">MakerPay</span>
         </Link>
-        <Link href="/login" className="text-sm text-gray-400 hover:text-white transition-colors">Kirish →</Link>
+        {isLoggedIn ? (
+          <Link href="/dashboard/merchant" className="text-sm text-gray-400 hover:text-white transition-colors">Dashboard →</Link>
+        ) : (
+          <Link href="/login" className="text-sm text-gray-400 hover:text-white transition-colors">Kirish →</Link>
+        )}
       </div>
 
       <div className="max-w-7xl mx-auto px-4 py-16">
@@ -131,10 +156,10 @@ export default function PricingPage() {
               </div>
 
               {/* CTA */}
-              <Link href={plan.ctaLink}
+              <Link href={getCtaLink(plan)}
                 className={`w-full py-3.5 rounded-2xl text-sm font-bold text-center transition-all flex items-center justify-center gap-2 ${plan.ctaStyle}`}>
                 <Zap className="w-4 h-4" />
-                {plan.cta}
+                {getCtaLabel(plan)}
               </Link>
             </div>
           ))}

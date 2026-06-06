@@ -100,6 +100,17 @@ export const storageApi = {
   uploadZip:         (file: File)   => { const f = new FormData(); f.append('file', file); return api.post('/storage/workspace/upload-zip', f); },
   exec:              (command: string) => api.post('/storage/workspace/exec', { command }),
   deleteWorkspaceFile: (path: string) => api.delete('/storage/workspace/files', { data: { path } }),
+  // Buckets
+  getBuckets:        ()                       => api.get('/storage/buckets'),
+  createBucket:      (name: string)           => api.post('/storage/buckets', { name }),
+  deleteBucket:      (id: string)             => api.delete(`/storage/buckets/${id}`),
+  regenerateBucketKey: (id: string)           => api.post(`/storage/buckets/${id}/regenerate`),
+  // Bucket tokens
+  listBucketTokens:  (id: string)             => api.get(`/storage/buckets/${id}/tokens`),
+  addBucketToken:    (id: string, name: string) => api.post(`/storage/buckets/${id}/tokens`, { name }),
+  deleteBucketToken: (id: string, tokenId: string) => api.delete(`/storage/buckets/${id}/tokens/${tokenId}`),
+  // Bucket domain
+  updateBucketDomain: (id: string, customDomain: string) => api.patch(`/storage/buckets/${id}/domain`, { customDomain }),
 };
 
 // ─── Webhooks ─────────────────────────────────────────────────────────────────

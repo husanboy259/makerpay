@@ -1,10 +1,13 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, NotFoundException, UnauthorizedException, BadRequestException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { exec } from 'child_process';
 import { mkdir, writeFile, unlink, readdir, lstat } from 'fs/promises';
-import { join, relative, basename } from 'path';
+import { join, relative } from 'path';
+import * as crypto from 'crypto';
 import { StorageFile } from './storage-file.entity';
+import { StorageBucket } from './storage-bucket.entity';
+import { StorageBucketToken } from './storage-bucket-token.entity';
 
 const UPLOADS_BASE = process.env.UPLOADS_DIR || '/tmp/makerpay-uploads';
 
@@ -36,6 +39,10 @@ export class StorageService {
   constructor(
     @InjectRepository(StorageFile)
     private repo: Repository<StorageFile>,
+    @InjectRepository(StorageBucket)
+    private bucketRepo: Repository<StorageBucket>,
+    @InjectRepository(StorageBucketToken)
+    private tokenRepo: Repository<StorageBucketToken>,
   ) {}
 
   // ─── Supabase cloud storage ───────────────────────────────────────────
@@ -67,7 +74,7 @@ export class StorageService {
     const safeName = `${Date.now()}_${file.originalname.replace(/[^a-zA-Z0-9._-]/g, '_')}`;
     await writeFile(join(userUploadDir, safeName), file.buffer);
 
-    const baseUrl = process.env.BASE_URL || 'https://api.makerpay.uz';
+    const baseUrl = process.env.BASE_URL || 'https://makerpay.uz';
     const fileUrl = `${baseUrl}/api/v1/storage/serve/${userId}/${safeName}`;
 
     const entity = this.repo.create({ userId, fileName: file.originalname, fileUrl, fileSize: file.size, mimeType: file.mimetype });
@@ -79,6 +86,120 @@ export class StorageService {
     if (!file) throw new Error('File not found');
     await this.repo.remove(file);
     return { message: 'Deleted' };
+  }
+
+  // ─── Bucket storage ──────────────────────────────────────────────────
+
+  private generateBucketKey(): { rawKey: string; apiKeyHash: string; apiKeyPrefix: string } {
+    const rawKey = `mpk_stg_${crypto.randomBytes(24).toString('hex')}`;
+    const apiKeyHash = crypto.createHash('sha256').update(rawKey).digest('hex');
+    const apiKeyPrefix = rawKey.substring(0, 16);
+    return { rawKey, apiKeyHash, apiKeyPrefix };
+  }
+
+  async createBucket(userId: string, name: string) {
+    if (!name?.trim()) throw new BadRequestException('Bucket nomi kerak');
+
+    let slug = name.trim().toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
+    const existing = await this.bucketRepo.findOne({ where: { slug } });
+    if (existing) slug = `${slug}-${Date.now().toString(36)}`;
+
+    const { rawKey, apiKeyHash, apiKeyPrefix } = this.generateBucketKey();
+
+    const bucket = await this.bucketRepo.save(
+      this.bucketRepo.create({ userId, name: name.trim(), slug, apiKeyHash, apiKeyPrefix }),
+    );
+
+    return { ...bucket, apiKey: rawKey };
+  }
+
+  async getBuckets(userId: string) {
+    return this.bucketRepo.find({ where: { userId }, order: { createdAt: 'DESC' } });
+  }
+
+  async deleteBucket(userId: string, id: string) {
+    const bucket = await this.bucketRepo.findOne({ where: { id, userId } });
+    if (!bucket) throw new NotFoundException('Bucket topilmadi');
+    await this.bucketRepo.remove(bucket);
+  }
+
+  async regenerateBucketKey(userId: string, id: string) {
+    const bucket = await this.bucketRepo.findOne({ where: { id, userId } });
+    if (!bucket) throw new NotFoundException('Bucket topilmadi');
+
+    const { rawKey, apiKeyHash, apiKeyPrefix } = this.generateBucketKey();
+    await this.bucketRepo.update(id, { apiKeyHash, apiKeyPrefix });
+    return { apiKey: rawKey, apiKeyPrefix };
+  }
+
+  async addBucketToken(userId: string, bucketId: string, name: string) {
+    const bucket = await this.bucketRepo.findOne({ where: { id: bucketId, userId } });
+    if (!bucket) throw new NotFoundException('Bucket topilmadi');
+
+    const rawKey = `mpk_stg_${crypto.randomBytes(24).toString('hex')}`;
+    const apiKeyHash = crypto.createHash('sha256').update(rawKey).digest('hex');
+    const apiKeyPrefix = rawKey.substring(0, 16);
+
+    const token = await this.tokenRepo.save(
+      this.tokenRepo.create({ bucketId, name, apiKeyHash, apiKeyPrefix }),
+    );
+    return { ...token, apiKey: rawKey };
+  }
+
+  async listBucketTokens(userId: string, bucketId: string) {
+    const bucket = await this.bucketRepo.findOne({ where: { id: bucketId, userId } });
+    if (!bucket) throw new NotFoundException('Bucket topilmadi');
+    return this.tokenRepo.find({ where: { bucketId }, order: { createdAt: 'DESC' } });
+  }
+
+  async deleteBucketToken(userId: string, bucketId: string, tokenId: string) {
+    const bucket = await this.bucketRepo.findOne({ where: { id: bucketId, userId } });
+    if (!bucket) throw new NotFoundException('Bucket topilmadi');
+    const token = await this.tokenRepo.findOne({ where: { id: tokenId, bucketId } });
+    if (!token) throw new NotFoundException('Token topilmadi');
+    await this.tokenRepo.remove(token);
+  }
+
+  async updateBucketDomain(userId: string, bucketId: string, customDomain: string | null) {
+    const bucket = await this.bucketRepo.findOne({ where: { id: bucketId, userId } });
+    if (!bucket) throw new NotFoundException('Bucket topilmadi');
+    await this.bucketRepo.update(bucketId, { customDomain: customDomain || null });
+    return this.bucketRepo.findOne({ where: { id: bucketId } });
+  }
+
+  async uploadToBucket(slug: string, apiKey: string, file: Express.Multer.File) {
+    const bucket = await this.bucketRepo.findOne({ where: { slug, isActive: true } });
+    if (!bucket) throw new NotFoundException('Bucket topilmadi');
+
+    const keyHash = crypto.createHash('sha256').update(apiKey).digest('hex');
+    const mainKeyMatch = keyHash === bucket.apiKeyHash;
+    const tokenMatch = mainKeyMatch ? false : !!(await this.tokenRepo.findOne({
+      where: { bucketId: bucket.id, apiKeyHash: keyHash, isActive: true },
+    }));
+    if (!mainKeyMatch && !tokenMatch) throw new UnauthorizedException('API key noto\'g\'ri');
+
+    const bucketDir = join(UPLOADS_BASE, 'buckets', bucket.id);
+    await mkdir(bucketDir, { recursive: true });
+
+    const safeName = `${Date.now()}_${file.originalname.replace(/[^a-zA-Z0-9._-]/g, '_')}`;
+    await writeFile(join(bucketDir, safeName), file.buffer);
+
+    const baseUrl = process.env.BASE_URL || 'https://makerpay.uz';
+    const url = `${baseUrl}/api/v1/storage/b/${slug}/${safeName}`;
+
+    await this.bucketRepo.update(bucket.id, {
+      fileCount: bucket.fileCount + 1,
+      totalSize: Number(bucket.totalSize) + file.size,
+    });
+
+    return { url, fileName: file.originalname, size: file.size, mimeType: file.mimetype };
+  }
+
+  async getBucketFilePath(slug: string, filename: string): Promise<string> {
+    const bucket = await this.bucketRepo.findOne({ where: { slug } });
+    if (!bucket) throw new NotFoundException('Bucket topilmadi');
+    const safeName = filename.replace(/[^a-zA-Z0-9._\-]/g, '_');
+    return join(UPLOADS_BASE, 'buckets', bucket.id, safeName);
   }
 
   // ─── Local workspace (deploy / terminal) ─────────────────────────────
