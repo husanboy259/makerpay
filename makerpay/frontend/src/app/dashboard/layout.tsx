@@ -4,8 +4,104 @@ import { useRouter } from 'next/navigation';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useAuthStore } from '@/store/auth.store';
 import { Sidebar } from '@/components/layouts/Sidebar';
-import { Bell, Search, CheckCheck } from 'lucide-react';
+import { Bell, Search, CheckCheck, MessageCircle, X, Send, Bot, Loader2 } from 'lucide-react';
 import api from '@/lib/api';
+
+// ─── Chatbot Widget ──────────────────────────────────────────────────────────
+function ChatWidget() {
+  const [open, setOpen] = useState(false);
+  const [messages, setMessages] = useState<{ role: 'user' | 'bot'; text: string }[]>([
+    { role: 'bot', text: "Salom! Men MakerPay yordamchisiman. Qanday yordam bera olaman?" }
+  ]);
+  const [input, setInput] = useState('');
+  const [loading, setLoading] = useState(false);
+  const bottomRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    bottomRef.current?.scrollIntoView({ behavior: 'smooth' });
+  }, [messages]);
+
+  const sendMessage = async () => {
+    if (!input.trim() || loading) return;
+    const userMsg = input.trim();
+    setInput('');
+    setMessages(m => [...m, { role: 'user', text: userMsg }]);
+    setLoading(true);
+    try {
+      const res: any = await api.post('/chatbot/message', { message: userMsg });
+      setMessages(m => [...m, { role: 'bot', text: res.reply || 'Javob topilmadi' }]);
+    } catch {
+      setMessages(m => [...m, { role: 'bot', text: 'Xatolik yuz berdi. Qaytadan urinib ko\'ring.' }]);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <div className="fixed bottom-6 right-6 z-50">
+      {open && (
+        <div className="mb-4 w-80 bg-[#111] border border-white/10 rounded-2xl shadow-2xl flex flex-col overflow-hidden" style={{ height: '420px' }}>
+          <div className="flex items-center justify-between px-4 py-3 bg-white/5 border-b border-white/10">
+            <div className="flex items-center gap-2">
+              <Bot className="w-4 h-4 text-indigo-400" />
+              <span className="text-sm font-bold text-white">MakerPay AI</span>
+              <span className="w-2 h-2 bg-green-400 rounded-full" />
+            </div>
+            <button onClick={() => setOpen(false)} className="text-gray-500 hover:text-white transition-colors">
+              <X className="w-4 h-4" />
+            </button>
+          </div>
+
+          <div className="flex-1 overflow-y-auto p-4 space-y-3">
+            {messages.map((m, i) => (
+              <div key={i} className={`flex ${m.role === 'user' ? 'justify-end' : 'justify-start'}`}>
+                <div className={`max-w-[85%] px-3 py-2 rounded-xl text-sm leading-relaxed ${
+                  m.role === 'user'
+                    ? 'bg-white text-black font-medium'
+                    : 'bg-white/5 border border-white/10 text-gray-200'
+                }`}>
+                  {m.text}
+                </div>
+              </div>
+            ))}
+            {loading && (
+              <div className="flex justify-start">
+                <div className="bg-white/5 border border-white/10 px-3 py-2 rounded-xl">
+                  <Loader2 className="w-4 h-4 text-gray-400 animate-spin" />
+                </div>
+              </div>
+            )}
+            <div ref={bottomRef} />
+          </div>
+
+          <div className="p-3 border-t border-white/10">
+            <div className="flex gap-2">
+              <input
+                value={input}
+                onChange={e => setInput(e.target.value)}
+                onKeyDown={e => e.key === 'Enter' && sendMessage()}
+                placeholder="Xabar yozing..."
+                className="flex-1 bg-white/5 border border-white/10 rounded-xl px-3 py-2 text-sm text-white focus:outline-none focus:border-white/30 placeholder:text-gray-600"
+              />
+              <button
+                onClick={sendMessage}
+                disabled={loading || !input.trim()}
+                className="p-2 bg-white text-black rounded-xl hover:bg-gray-100 transition-all disabled:opacity-50">
+                <Send className="w-4 h-4" />
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      <button
+        onClick={() => setOpen(!open)}
+        className="w-14 h-14 bg-white text-black rounded-full shadow-2xl flex items-center justify-center hover:bg-gray-100 transition-all hover:scale-105">
+        {open ? <X className="w-6 h-6" /> : <MessageCircle className="w-6 h-6" />}
+      </button>
+    </div>
+  );
+}
 
 function NotificationBell() {
   const qc = useQueryClient();
@@ -95,11 +191,16 @@ function NotificationBell() {
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
   const router = useRouter();
   const { user, token } = useAuthStore();
+  const [hydrated, setHydrated] = useState(false);
+
+  useEffect(() => { setHydrated(true); }, []);
 
   useEffect(() => {
-    if (!token) router.replace('/login');
-  }, [token, router]);
+    if (hydrated && !token) router.replace('/login');
+  }, [hydrated, token, router]);
 
+  // Wait for localStorage to load — show blank screen, not a redirect flash
+  if (!hydrated) return <div className="min-h-screen bg-black" />;
   if (!token || !user) return null;
 
   return (
@@ -125,6 +226,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
           {children}
         </main>
       </div>
+      <ChatWidget />
     </div>
   );
 }
