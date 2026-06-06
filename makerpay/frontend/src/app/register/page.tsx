@@ -176,10 +176,26 @@ export default function RegisterPage() {
                     onChange={e => set('email', e.target.value)} required />
                 </Field>
                 <Field label="Telefon raqam" required>
-                  <input className={inputCls} placeholder="+998 90 123 45 67" value={form.phone}
-                    onChange={e => set('phone', e.target.value)} required />
+                  <div className="relative">
+                    <span className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 text-sm font-medium select-none">+998</span>
+                    <input
+                      className={`${inputCls} pl-16 ${form.phone && form.phone.replace(/\D/g,'').length !== 9 ? 'border-red-500/50' : ''}`}
+                      placeholder="90 123 45 67"
+                      value={form.phone}
+                      maxLength={12}
+                      onChange={e => {
+                        const digits = e.target.value.replace(/\D/g, '').slice(0, 9);
+                        const formatted = digits.replace(/(\d{2})(\d{3})(\d{2})(\d{2})/, '$1 $2 $3 $4').trim();
+                        set('phone', formatted);
+                      }}
+                      required
+                    />
+                  </div>
+                  {form.phone && form.phone.replace(/\D/g,'').length !== 9 && (
+                    <p className="text-red-400 text-xs mt-1">Telefon raqam 9 raqamdan iborat bo'lishi kerak</p>
+                  )}
                 </Field>
-                <button type="submit" disabled={!form.fullName || !form.email || !form.phone}
+                <button type="submit" disabled={!form.fullName || !form.email || form.phone.replace(/\D/g,'').length !== 9}
                   className="w-full py-3 rounded-xl bg-white text-black text-sm font-bold hover:bg-gray-100 transition-all disabled:opacity-40 flex items-center justify-center gap-2">
                   Keyingi <ArrowRight className="w-4 h-4" />
                 </button>

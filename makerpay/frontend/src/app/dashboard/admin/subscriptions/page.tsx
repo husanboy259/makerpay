@@ -18,13 +18,16 @@ const PLANS = [
 const planMeta = Object.fromEntries(PLANS.map(p => [p.key, p]));
 
 const subApi = {
-  getStats:    ()              => api.get('/subscriptions/admin/stats'),
-  getTrials:   (status?: string) => api.get('/subscriptions/admin/trials', { params: { status, limit: 50 } }),
-  getAllSubs:   ()              => api.get('/subscriptions/admin/all?limit=50'),
-  assign:      (data: any)     => api.post('/subscriptions/admin/assign', data),
-  approve:     (id: string, invitationText?: string) => api.patch(`/subscriptions/admin/trials/${id}/approve`, { invitationText }),
-  reject:      (id: string, adminNote: string) => api.patch(`/subscriptions/admin/trials/${id}/reject`, { adminNote }),
-  invite:      (id: string, invitationText: string) => api.patch(`/subscriptions/admin/trials/${id}/invite`, { invitationText }),
+  getStats:      ()              => api.get('/subscriptions/admin/stats'),
+  getTrials:     (status?: string) => api.get('/subscriptions/admin/trials', { params: { status, limit: 50 } }),
+  getAllSubs:     ()              => api.get('/subscriptions/admin/all?limit=50'),
+  assign:        (data: any)     => api.post('/subscriptions/admin/assign', data),
+  approve:       (id: string, invitationText?: string) => api.patch(`/subscriptions/admin/trials/${id}/approve`, { invitationText }),
+  reject:        (id: string, adminNote: string) => api.patch(`/subscriptions/admin/trials/${id}/reject`, { adminNote }),
+  invite:        (id: string, invitationText: string) => api.patch(`/subscriptions/admin/trials/${id}/invite`, { invitationText }),
+  getOrders:     (status?: string) => api.get('/subscriptions/admin/orders', { params: { status, limit: 50 } }),
+  confirmOrder:  (id: string, adminNote?: string) => api.patch(`/subscriptions/admin/orders/${id}/confirm`, { adminNote }),
+  rejectOrder:   (id: string, adminNote: string) => api.patch(`/subscriptions/admin/orders/${id}/reject`, { adminNote }),
 };
 
 function formatDate(d: string) {
@@ -33,7 +36,7 @@ function formatDate(d: string) {
 
 export default function SubscriptionsAdminPage() {
   const qc = useQueryClient();
-  const [tab, setTab] = useState<'trials' | 'subscriptions'>('trials');
+  const [tab, setTab] = useState<'trials' | 'subscriptions' | 'orders'>('trials');
   const [filterStatus, setFilterStatus] = useState('pending');
   const [selected, setSelected] = useState<any>(null);
   const [inviteText, setInviteText] = useState('');
@@ -50,6 +53,14 @@ export default function SubscriptionsAdminPage() {
     queryKey: ['admin-subs'],
     queryFn: () => subApi.getAllSubs() as any,
     enabled: tab === 'subscriptions',
+  });
+  const [orderFilter, setOrderFilter] = useState('awaiting_confirmation');
+  const [selectedOrder, setSelectedOrder] = useState<any>(null);
+  const [orderNote, setOrderNote] = useState('');
+  const { data: orders, isLoading: loadingOrders } = useQuery({
+    queryKey: ['admin-orders', orderFilter],
+    queryFn: () => subApi.getOrders(orderFilter === 'all' ? undefined : orderFilter) as any,
+    enabled: tab === 'orders',
   });
 
   const approveMutation = useMutation({
@@ -68,9 +79,18 @@ export default function SubscriptionsAdminPage() {
     mutationFn: () => subApi.assign({ merchantId: assignModal.merchantId, ...assignForm }),
     onSuccess: () => { qc.invalidateQueries({ queryKey: ['admin-subs', 'sub-stats'] }); setAssignModal(null); },
   });
+  const confirmOrderMutation = useMutation({
+    mutationFn: () => subApi.confirmOrder(selectedOrder.id, orderNote || undefined),
+    onSuccess: () => { qc.invalidateQueries({ queryKey: ['admin-orders'] }); setSelectedOrder(null); setOrderNote(''); },
+  });
+  const rejectOrderMutation = useMutation({
+    mutationFn: () => subApi.rejectOrder(selectedOrder.id, orderNote),
+    onSuccess: () => { qc.invalidateQueries({ queryKey: ['admin-orders'] }); setSelectedOrder(null); setOrderNote(''); },
+  });
 
   const trialsList: any[] = (trials as any)?.data || [];
   const subsList: any[]   = (subs as any)?.data || [];
+  const ordersList: any[] = (orders as any)?.data || [];
 
   const statusBadge = (s: string) => ({
     pending:  'bg-yellow-500/10 text-yellow-400 border-yellow-500/20',
@@ -122,6 +142,7 @@ export default function SubscriptionsAdminPage() {
       <div className="flex gap-2">
         {[
           { key: 'trials', label: 'Trial arizalar' },
+          { key: 'orders', label: "To'lov buyurtmalari" },
           { key: 'subscriptions', label: 'Barcha obunalar' },
         ].map(t => (
           <button key={t.key} onClick={() => setTab(t.key as any)}
@@ -307,6 +328,101 @@ export default function SubscriptionsAdminPage() {
               })}
             </tbody>
           </table>
+        </div>
+      )}
+
+      {/* ORDERS TAB */}
+      {tab === 'orders' && (
+        <div className="space-y-4">
+          <div className="flex gap-2">
+            {['awaiting_confirmation', 'paid', 'rejected', 'all'].map(s => (
+              <button key={s} onClick={() => setOrderFilter(s)}
+                className={`px-3 py-1.5 rounded-xl text-xs font-semibold border transition-all ${orderFilter === s ? 'bg-white text-black border-white' : 'border-white/10 text-gray-400 hover:text-white'}`}>
+                {s === 'awaiting_confirmation' ? 'Kutilmoqda' : s === 'paid' ? 'Tasdiqlangan' : s === 'rejected' ? 'Rad etilgan' : 'Barchasi'}
+              </button>
+            ))}
+          </div>
+          <div className="bg-[#111] border border-white/10 rounded-2xl overflow-hidden">
+            {loadingOrders ? (
+              <div className="text-center py-10"><Loader2 className="w-5 h-5 animate-spin mx-auto text-gray-500" /></div>
+            ) : ordersList.length === 0 ? (
+              <div className="text-center py-10 text-gray-500 text-sm">Buyurtmalar yo'q</div>
+            ) : (
+              <table className="w-full text-sm">
+                <thead>
+                  <tr className="border-b border-white/10">
+                    {['Tarif', 'Summa', "To'lovchi", 'Telefon', 'Sana', 'Status', 'Amallar'].map(h => (
+                      <th key={h} className="text-left px-4 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">{h}</th>
+                    ))}
+                  </tr>
+                </thead>
+                <tbody>
+                  {ordersList.map((o: any) => {
+                    const pm = planMeta[o.plan] || planMeta['start'];
+                    return (
+                      <tr key={o.id} className="border-b border-white/5 hover:bg-white/5">
+                        <td className="px-4 py-3">
+                          <span className={`px-2 py-0.5 rounded-lg text-xs font-bold border ${pm.border} ${pm.bg} ${pm.color}`}>{pm.label}</span>
+                        </td>
+                        <td className="px-4 py-3 text-white font-mono text-xs">{o.amount?.toLocaleString()} so'm</td>
+                        <td className="px-4 py-3 text-gray-300 text-xs">{o.payerName || '—'}</td>
+                        <td className="px-4 py-3 text-gray-400 text-xs">{o.payerPhone || '—'}</td>
+                        <td className="px-4 py-3 text-gray-500 text-xs">{formatDate(o.createdAt)}</td>
+                        <td className="px-4 py-3">
+                          <span className={`text-xs px-2 py-0.5 rounded-full border font-semibold ${
+                            o.status === 'paid' ? 'bg-green-500/10 text-green-400 border-green-500/20' :
+                            o.status === 'rejected' ? 'bg-red-500/10 text-red-400 border-red-500/20' :
+                            o.status === 'awaiting_confirmation' ? 'bg-yellow-500/10 text-yellow-400 border-yellow-500/20' :
+                            'bg-gray-500/10 text-gray-400 border-gray-500/20'
+                          }`}>{o.status}</span>
+                        </td>
+                        <td className="px-4 py-3">
+                          {o.status === 'awaiting_confirmation' && (
+                            <button onClick={() => { setSelectedOrder(o); setOrderNote(''); }}
+                              className="px-3 py-1.5 rounded-lg bg-white/5 border border-white/10 text-xs text-gray-300 hover:text-white transition-all">
+                              Ko'rish
+                            </button>
+                          )}
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* Order confirm modal */}
+      {selectedOrder && (
+        <div className="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+          <div className="bg-[#111] border border-white/10 rounded-2xl w-full max-w-sm p-6 space-y-4">
+            <div className="flex items-center justify-between">
+              <h3 className="text-base font-bold text-white">To'lov buyurtmasi</h3>
+              <button onClick={() => setSelectedOrder(null)} className="w-7 h-7 flex items-center justify-center rounded-xl bg-white/5 text-gray-400 hover:text-white">✕</button>
+            </div>
+            <div className="bg-white/5 rounded-xl p-4 space-y-2 text-sm">
+              <div className="flex justify-between"><span className="text-gray-500">Tarif</span><span className={`font-bold ${planMeta[selectedOrder.plan]?.color}`}>{planMeta[selectedOrder.plan]?.label}</span></div>
+              <div className="flex justify-between"><span className="text-gray-500">Summa</span><span className="text-white font-mono">{selectedOrder.amount?.toLocaleString()} so'm</span></div>
+              <div className="flex justify-between"><span className="text-gray-500">To'lovchi</span><span className="text-white">{selectedOrder.payerName}</span></div>
+              <div className="flex justify-between"><span className="text-gray-500">Telefon</span><span className="text-white">{selectedOrder.payerPhone}</span></div>
+            </div>
+            <textarea value={orderNote} onChange={e => setOrderNote(e.target.value)}
+              className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white text-sm focus:outline-none focus:border-white/30 resize-none"
+              rows={2} placeholder="Izoh (ixtiyoriy)" />
+            <div className="flex gap-3">
+              <button onClick={() => rejectOrderMutation.mutate()} disabled={rejectOrderMutation.isPending}
+                className="flex-1 py-2.5 rounded-xl bg-red-500/10 border border-red-500/20 text-red-400 text-sm font-semibold hover:bg-red-500/20 transition-all flex items-center justify-center gap-1.5">
+                <XCircle className="w-4 h-4" /> Rad etish
+              </button>
+              <button onClick={() => confirmOrderMutation.mutate()} disabled={confirmOrderMutation.isPending}
+                className="flex-1 py-2.5 rounded-xl bg-green-500/10 border border-green-500/20 text-green-400 text-sm font-semibold hover:bg-green-500/20 transition-all flex items-center justify-center gap-1.5">
+                {confirmOrderMutation.isPending ? <Loader2 className="w-4 h-4 animate-spin" /> : <CheckCircle className="w-4 h-4" />}
+                Tasdiqlash
+              </button>
+            </div>
+          </div>
         </div>
       )}
 

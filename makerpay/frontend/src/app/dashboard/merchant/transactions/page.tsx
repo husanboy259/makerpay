@@ -1,9 +1,10 @@
 'use client';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { paymentsApi } from '@/lib/api';
+import { paymentsApi, merchantsApi } from '@/lib/api';
 import { formatAmount, formatDate, statusBadgeClass, statusLabel, providerLabel } from '@/lib/utils';
-import { Search, X, Download, FileText, ChevronLeft, ChevronRight, Loader2 } from 'lucide-react';
+import { Search, X, Download, FileText, ChevronLeft, ChevronRight, Loader2, Plus, Copy, Check, ExternalLink } from 'lucide-react';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
 
 /* ── Export helpers ──────────────────────────────────── */
 function exportCSV(payments: any[]) {
@@ -60,10 +61,155 @@ const STATUS_COLORS: Record<string, string> = {
   refunded:   'bg-purple-500/10 text-purple-400 border border-purple-500/20',
 };
 
+function CopyBtn({ text }: { text: string }) {
+  const [copied, setCopied] = useState(false);
+  return (
+    <button onClick={() => { navigator.clipboard.writeText(text); setCopied(true); setTimeout(() => setCopied(false), 2000); }}
+      className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-all ${copied ? 'bg-green-500/10 text-green-400' : 'bg-white/5 text-gray-400 hover:text-white hover:bg-white/10'}`}>
+      {copied ? <Check className="w-3 h-3" /> : <Copy className="w-3 h-3" />}
+      {copied ? 'Nusxa!' : 'Nusxa olish'}
+    </button>
+  );
+}
+
+function CreatePaymentModal({ onClose, onCreated }: { onClose: () => void; onCreated: () => void }) {
+  const [form, setForm] = useState({ amount: '', description: '', externalOrderId: '', customerName: '', customerPhone: '', returnUrl: '', providerName: '' });
+  const [result, setResult] = useState<any>(null);
+  const { data: merchant } = useQuery({ queryKey: ['merchant-me'], queryFn: () => merchantsApi.getMe() });
+  useEffect(() => {
+    if (merchant) {
+      const m = merchant as any;
+      setForm(f => ({
+        ...f,
+        customerName: f.customerName || m.businessName || '',
+        customerPhone: f.customerPhone || (m.contactPhone ? m.contactPhone.replace('+998', '').replace(/\D/g, '') : ''),
+      }));
+    }
+  }, [merchant]);
+  const [error, setError] = useState('');
+
+  const mut = useMutation({
+    mutationFn: () => paymentsApi.create({
+      amount: Number(form.amount),
+      description: form.description || undefined,
+      externalOrderId: form.externalOrderId || undefined,
+      customerName: form.customerName || undefined,
+      customerPhone: form.customerPhone ? '+998' + form.customerPhone.replace(/\D/g, '') : undefined,
+      returnUrl: form.returnUrl || undefined,
+      providerName: form.providerName || undefined,
+    }),
+    onSuccess: (res: any) => { setResult(res); onCreated(); },
+    onError: (e: any) => setError(e?.message || 'Xatolik yuz berdi'),
+  });
+
+  const set = (k: string, v: string) => setForm(f => ({ ...f, [k]: v }));
+  const payUrl = result?.paymentUrl || '';
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm p-4" onClick={onClose}>
+      <div className="bg-[#111] border border-white/10 rounded-2xl w-full max-w-md shadow-2xl" onClick={e => e.stopPropagation()}>
+        <div className="flex items-center justify-between px-6 py-4 border-b border-white/10">
+          <h2 className="text-base font-bold text-white">To'lov yaratish</h2>
+          <button onClick={onClose} className="text-gray-500 hover:text-white transition-colors"><X className="w-5 h-5" /></button>
+        </div>
+
+        {result ? (
+          <div className="p-6 space-y-4">
+            <div className="flex items-center justify-center w-14 h-14 rounded-full bg-green-500/10 border border-green-500/20 mx-auto">
+              <Check className="w-7 h-7 text-green-400" />
+            </div>
+            <p className="text-center text-white font-bold">To'lov yaratildi!</p>
+            <p className="text-center text-gray-400 text-sm">Mijozga quyidagi havolani yuboring:</p>
+            <div className="bg-black/40 rounded-xl p-3 space-y-2">
+              <p className="text-xs text-gray-500 break-all font-mono">{payUrl}</p>
+              <div className="flex gap-2">
+                <CopyBtn text={payUrl} />
+                <a href={payUrl} target="_blank" rel="noreferrer"
+                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium bg-white/5 text-gray-400 hover:text-white hover:bg-white/10 transition-all">
+                  <ExternalLink className="w-3 h-3" /> Ochish
+                </a>
+              </div>
+            </div>
+            <div className="grid grid-cols-2 gap-2 text-xs">
+              <div className="bg-white/5 rounded-xl p-3"><p className="text-gray-500">Summa</p><p className="text-white font-bold mt-1">{Number(result.amount).toLocaleString()} UZS</p></div>
+              <div className="bg-white/5 rounded-xl p-3"><p className="text-gray-500">Status</p><p className="text-yellow-400 font-bold mt-1 capitalize">{result.status}</p></div>
+            </div>
+            <button onClick={onClose} className="w-full py-3 rounded-xl bg-white text-black font-bold text-sm hover:bg-gray-100 transition-all">Yopish</button>
+          </div>
+        ) : (
+          <div className="p-6 space-y-4">
+            {error && <div className="bg-red-500/10 border border-red-500/20 text-red-400 text-sm rounded-xl px-4 py-3">{error}</div>}
+
+            <div>
+              <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1.5">Summa (UZS) *</label>
+              <input type="number" value={form.amount} onChange={e => set('amount', e.target.value)} min="1000" placeholder="50000"
+                className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white text-sm focus:outline-none focus:border-white/30 transition-all placeholder:text-gray-600" />
+            </div>
+
+            <div>
+              <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1.5">Tavsif</label>
+              <input value={form.description} onChange={e => set('description', e.target.value)} placeholder="Mahsulot uchun to'lov"
+                className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white text-sm focus:outline-none focus:border-white/30 transition-all placeholder:text-gray-600" />
+            </div>
+
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1.5">Buyurtma ID</label>
+                <input value={form.externalOrderId} onChange={e => set('externalOrderId', e.target.value)} placeholder="ORDER-001"
+                  className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white text-sm focus:outline-none focus:border-white/30 transition-all placeholder:text-gray-600" />
+              </div>
+              <div>
+                <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1.5">Provayder</label>
+                <select value={form.providerName} onChange={e => set('providerName', e.target.value)}
+                  className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white text-sm focus:outline-none focus:border-white/30 transition-all">
+                  <option value="">Avtomatik</option>
+                  <option value="tspay">TSPay</option>
+                  <option value="paynest">Paynest</option>
+                  <option value="tulovpay">TulovPay</option>
+                </select>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1.5">Mijoz ismi</label>
+                <input value={form.customerName} onChange={e => set('customerName', e.target.value)} placeholder="Ism Familiya"
+                  className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white text-sm focus:outline-none focus:border-white/30 transition-all placeholder:text-gray-600" />
+              </div>
+              <div>
+                <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1.5">Telefon</label>
+                <div className="relative">
+                  <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500 text-sm select-none">+998</span>
+                  <input value={form.customerPhone} onChange={e => set('customerPhone', e.target.value.replace(/\D/g,'').slice(0,9))} placeholder="901234567"
+                    className="w-full bg-white/5 border border-white/10 rounded-xl pl-12 pr-3 py-3 text-white text-sm focus:outline-none focus:border-white/30 transition-all placeholder:text-gray-600" />
+                </div>
+              </div>
+            </div>
+
+            <div>
+              <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1.5">To'lovdan keyin URL</label>
+              <input value={form.returnUrl} onChange={e => set('returnUrl', e.target.value)} placeholder="https://sizningsayt.uz/success"
+                className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white text-sm focus:outline-none focus:border-white/30 transition-all placeholder:text-gray-600" />
+            </div>
+
+            <button onClick={() => mut.mutate()} disabled={mut.isPending || !form.amount || Number(form.amount) < 1000}
+              className="w-full py-3.5 rounded-xl bg-white text-black font-black text-sm hover:bg-gray-100 transition-all disabled:opacity-50 flex items-center justify-center gap-2">
+              {mut.isPending ? <Loader2 className="w-4 h-4 animate-spin" /> : <Plus className="w-4 h-4" />}
+              {mut.isPending ? 'Yaratilmoqda...' : 'To\'lov yaratish'}
+            </button>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
 export default function TransactionsPage() {
+  const qc = useQueryClient();
   const [filters, setFilters] = useState({ status: '', providerName: '', search: '', page: 1 });
   const [selectedPayment, setSelectedPayment] = useState<any>(null);
   const [exporting, setExporting] = useState<'csv' | 'pdf' | null>(null);
+  const [showCreate, setShowCreate] = useState(false);
 
   const { data, isLoading } = useQuery({
     queryKey: ['payments', filters],
@@ -88,6 +234,7 @@ export default function TransactionsPage() {
 
   return (
     <div className="space-y-5">
+      {showCreate && <CreatePaymentModal onClose={() => setShowCreate(false)} onCreated={() => qc.invalidateQueries({ queryKey: ['payments'] })} />}
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
@@ -95,15 +242,19 @@ export default function TransactionsPage() {
           <p className="text-sm text-gray-500 mt-1">Barcha to&apos;lovlar tarixi</p>
         </div>
         <div className="flex items-center gap-2">
+          <button onClick={() => setShowCreate(true)}
+            className="inline-flex items-center gap-2 bg-white text-black text-sm font-bold px-4 py-2.5 rounded-xl hover:bg-gray-100 transition-all">
+            <Plus className="w-4 h-4" /> To&apos;lov yaratish
+          </button>
           <button onClick={() => handleExport('csv')} disabled={!!exporting}
             className="inline-flex items-center gap-2 bg-white/5 border border-white/10 text-gray-300 hover:text-white hover:border-white/20 text-sm font-semibold px-4 py-2.5 rounded-xl transition-all disabled:opacity-50">
             {exporting === 'csv' ? <Loader2 className="w-4 h-4 animate-spin" /> : <Download className="w-4 h-4" />}
             CSV
           </button>
           <button onClick={() => handleExport('pdf')} disabled={!!exporting}
-            className="inline-flex items-center gap-2 bg-white text-black text-sm font-bold px-4 py-2.5 rounded-xl hover:bg-gray-100 transition-all disabled:opacity-50">
+            className="inline-flex items-center gap-2 bg-white/5 border border-white/10 text-gray-300 hover:text-white hover:border-white/20 text-sm font-semibold px-4 py-2.5 rounded-xl transition-all disabled:opacity-50">
             {exporting === 'pdf' ? <Loader2 className="w-4 h-4 animate-spin" /> : <FileText className="w-4 h-4" />}
-            PDF yuklab olish
+            PDF
           </button>
         </div>
       </div>

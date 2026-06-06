@@ -52,9 +52,9 @@ export default function ApplyTrialPage() {
         <h1 className="text-2xl font-black text-white mb-3">Ariza yuborildi!</h1>
         <p className="text-gray-400 mb-2">To'lov tekshirilgandan so'ng ariza ko'rib chiqiladi.</p>
         <p className="text-gray-500 text-sm mb-8">Natija haqida Telegram yoki email orqali xabar beramiz.</p>
-        <Link href="/dashboard/merchant"
+        <Link href="/pricing"
           className="inline-flex items-center gap-2 bg-white text-black font-bold px-6 py-3 rounded-xl hover:bg-gray-100 transition-all">
-          Dashboardga qaytish
+          Tarifni tanlash →
         </Link>
       </div>
     </div>
@@ -130,9 +130,19 @@ export default function ApplyTrialPage() {
               <div className="grid grid-cols-2 gap-3">
                 <div>
                   <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1.5">Telefon *</label>
-                  <input value={form.phone} onChange={e => setForm({ ...form, phone: e.target.value })}
-                    className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white text-sm focus:outline-none focus:border-white/30 transition-all"
-                    placeholder="+998 90 000 00 00" />
+                  <div className="relative">
+                    <span className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 text-sm font-medium select-none">+998</span>
+                    <input
+                      value={form.phone}
+                      maxLength={12}
+                      onChange={e => {
+                        const digits = e.target.value.replace(/\D/g, '').slice(0, 9);
+                        const formatted = digits.replace(/(\d{2})(\d{3})(\d{2})(\d{2})/, '$1 $2 $3 $4').trim();
+                        setForm({ ...form, phone: formatted });
+                      }}
+                      className="w-full bg-white/5 border border-white/10 rounded-xl pl-16 pr-4 py-3 text-white text-sm focus:outline-none focus:border-white/30 transition-all"
+                      placeholder="90 123 45 67" />
+                  </div>
                 </div>
                 <div>
                   <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1.5">
@@ -195,9 +205,19 @@ export default function ApplyTrialPage() {
                 </div>
                 <div>
                   <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1.5">To&apos;lovchi telefon *</label>
-                  <input value={payer.phone} onChange={e => setPayer({ ...payer, phone: e.target.value })}
-                    className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white text-sm focus:outline-none focus:border-white/30 transition-all"
-                    placeholder="+998 90 000 00 00" />
+                  <div className="relative">
+                    <span className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 text-sm font-medium select-none">+998</span>
+                    <input
+                      value={payer.phone}
+                      maxLength={12}
+                      onChange={e => {
+                        const digits = e.target.value.replace(/\D/g, '').slice(0, 9);
+                        const formatted = digits.replace(/(\d{2})(\d{3})(\d{2})(\d{2})/, '$1 $2 $3 $4').trim();
+                        setPayer({ ...payer, phone: formatted });
+                      }}
+                      className="w-full bg-white/5 border border-white/10 rounded-xl pl-16 pr-4 py-3 text-white text-sm focus:outline-none focus:border-white/30 transition-all"
+                      placeholder="90 123 45 67" />
+                  </div>
                 </div>
               </div>
 

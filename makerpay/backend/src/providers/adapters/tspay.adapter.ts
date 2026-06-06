@@ -20,122 +20,98 @@ export class TsPayAdapter extends BasePaymentAdapter {
   constructor(credentials: AdapterCredentials) {
     super(credentials);
     const baseURL = credentials.testMode
-      ? 'https://sandbox.tspay.uz/api/v1'
-      : 'https://api.tspay.uz/api/v1';
+      ? 'https://test.tspay.uz/api'
+      : 'https://api.tspay.uz/api';
 
     this.http = axios.create({
       baseURL,
       timeout: 30000,
-      headers: {
-        'Content-Type': 'application/json',
-        Authorization: `Bearer ${credentials.apiKey}`,
-      },
+      headers: { 'Content-Type': 'application/json' },
     });
+  }
+
+  // TSPay requires integer order_id; convert UUID by taking first 8 hex chars
+  static uuidToOrderId(uuid: string): number {
+    return parseInt(uuid.replace(/-/g, '').slice(0, 8), 16);
   }
 
   async createPayment(input: CreatePaymentInput): Promise<CreatePaymentResult> {
     try {
-      const { data } = await this.http.post('/payments/create', {
+      const tsPayOrderId = TsPayAdapter.uuidToOrderId(input.orderId);
+      const { data } = await this.http.post('/transactions/', {
         merchant_id: this.credentials.merchantId,
-        order_id: input.orderId,
         amount: input.amount,
-        currency: input.currency || 'UZS',
-        description: input.description,
-        return_url: input.returnUrl,
-        callback_url: input.callbackUrl,
-        customer: {
-          name: input.customerName,
-          email: input.customerEmail,
-          phone: input.customerPhone,
-        },
-        extra: input.metadata,
+        order_id: tsPayOrderId,
+        redirect_url: input.returnUrl,
       });
 
       return {
-        providerPaymentId: data.payment_id || data.id,
-        paymentUrl: data.payment_url || data.url,
-        status: this.mapStatus(data.status),
+        providerPaymentId: data.cheque_id,
+        paymentUrl: data.payment_url,
+        status: 'pending',
         rawResponse: data,
       };
     } catch (error: any) {
       this.logger.error(`TSPay createPayment error: ${error.message}`);
-      throw new Error(`TSPay error: ${error.response?.data?.message || error.message}`);
+      throw new Error(`TSPay error: ${error.response?.data?.detail || error.message}`);
     }
   }
 
   async checkStatus(providerPaymentId: string): Promise<CheckStatusResult> {
     try {
-      const { data } = await this.http.get(`/payments/${providerPaymentId}/status`);
-
+      const { data } = await this.http.get(`/transactions/cheque/${providerPaymentId}`);
       return {
         providerPaymentId,
         status: this.mapStatus(data.status),
         amount: data.amount,
-        paidAt: data.paid_at ? new Date(data.paid_at) : undefined,
+        paidAt: data.paid_at ? new Date(data.paid_at * 1000) : undefined,
         rawResponse: data,
       };
     } catch (error: any) {
       this.logger.error(`TSPay checkStatus error: ${error.message}`);
-      throw new Error(`TSPay error: ${error.response?.data?.message || error.message}`);
+      throw new Error(`TSPay error: ${error.response?.data?.detail || error.message}`);
     }
   }
 
-  async refund(input: RefundInput): Promise<RefundResult> {
-    try {
-      const { data } = await this.http.post('/refunds/create', {
-        payment_id: input.providerPaymentId,
-        amount: input.amount,
-        reason: input.reason,
-      });
-
-      return {
-        providerRefundId: data.refund_id || data.id,
-        status: data.status,
-        rawResponse: data,
-      };
-    } catch (error: any) {
-      this.logger.error(`TSPay refund error: ${error.message}`);
-      throw new Error(`TSPay refund error: ${error.response?.data?.message || error.message}`);
-    }
+  async refund(_input: RefundInput): Promise<RefundResult> {
+    throw new Error('TSPay refund not supported');
   }
 
-  async handleWebhook(payload: any, signature?: string): Promise<WebhookResult> {
-    if (signature && !this.verifyWebhookSignature(payload, signature)) {
-      throw new Error('Invalid TSPay webhook signature');
-    }
-
+  // Webhook 3-method protocol handled directly in SubscriptionsService
+  async handleWebhook(payload: any, _signature?: string): Promise<WebhookResult> {
+    const params = payload?.params || {};
     return {
-      paymentId: payload.payment_id || payload.order_id,
-      status: this.mapStatus(payload.status),
-      amount: payload.amount,
+      paymentId: params.cheque_id || params.order_id?.toString(),
+      status: payload?.method === 'performTransaction' ? 'completed' : 'pending',
+      amount: params.amount,
       rawData: payload,
     };
   }
 
-  verifyWebhookSignature(payload: any, signature: string): boolean {
-    const data = typeof payload === 'string' ? payload : JSON.stringify(payload);
-    const expected = crypto
+  verifyWebhookSignature(payload: any, signature: string, timestamp?: string): boolean {
+    if (!timestamp) return false;
+    const params = payload?.params || {};
+    const orderId = params.order_id ?? '';
+    let amountStr = String(params.amount ?? '');
+    if (!amountStr.includes('.')) amountStr += '.0';
+
+    const expected = 'sha256=' + crypto
       .createHmac('sha256', this.credentials.secretKey)
-      .update(data)
+      .update(`${orderId}:${amountStr}:${timestamp}`)
       .digest('hex');
-    return crypto.timingSafeEqual(Buffer.from(signature), Buffer.from(expected));
+
+    try {
+      return signature.length === expected.length &&
+        crypto.timingSafeEqual(Buffer.from(signature), Buffer.from(expected));
+    } catch {
+      return false;
+    }
   }
 
-  private mapStatus(
-    status: string,
-  ): 'pending' | 'processing' | 'completed' | 'failed' | 'cancelled' | 'refunded' {
-    const map: Record<string, any> = {
-      created: 'pending',
-      pending: 'pending',
-      processing: 'processing',
-      paid: 'completed',
-      completed: 'completed',
-      success: 'completed',
-      failed: 'failed',
-      error: 'failed',
-      cancelled: 'cancelled',
-      refunded: 'refunded',
-    };
-    return map[status?.toLowerCase()] || 'pending';
+  private mapStatus(status: string | number): 'pending' | 'processing' | 'completed' | 'failed' | 'cancelled' | 'refunded' {
+    if (status === 1 || status === 'success') return 'completed';
+    if (status === -1 || status === 'canceled') return 'cancelled';
+    if (status === -9 || status === 'failed') return 'failed';
+    return 'pending';
   }
 }

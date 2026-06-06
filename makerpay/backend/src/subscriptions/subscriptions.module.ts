@@ -2,12 +2,13 @@ import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { MerchantSubscription, TrialApplication } from './entities/subscription.entity';
 import { Notification } from './entities/notification.entity';
+import { SubscriptionOrder } from './entities/subscription-order.entity';
 import { SubscriptionsService } from './subscriptions.service';
-import { SubscriptionsController } from './subscriptions.controller';
+import { SubscriptionsController, SubscriptionWebhookController } from './subscriptions.controller';
 
 @Module({
-  imports: [TypeOrmModule.forFeature([MerchantSubscription, TrialApplication, Notification])],
-  controllers: [SubscriptionsController],
+  imports: [TypeOrmModule.forFeature([MerchantSubscription, TrialApplication, Notification, SubscriptionOrder])],
+  controllers: [SubscriptionsController, SubscriptionWebhookController],
   providers: [SubscriptionsService],
   exports: [SubscriptionsService],
 })

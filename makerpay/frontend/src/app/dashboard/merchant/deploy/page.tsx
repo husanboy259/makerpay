@@ -267,7 +267,19 @@ export default function DeployPage() {
                 <FileTree
                   nodes={files}
                   selected={selected?.path ?? null}
-                  onSelect={(path, name) => setSelected({ path, name })}
+                  onSelect={(path, name) => {
+                    setSelected({ path, name });
+                    const ext = name.split('.').pop()?.toLowerCase() || '';
+                    const textExts = ['txt','js','ts','jsx','tsx','json','md','html','css','py','sh','env','yml','yaml','toml','ini','log','xml','sql'];
+                    const imgExts = ['jpg','jpeg','png','gif','webp','svg'];
+                    if (textExts.includes(ext)) {
+                      runCommand(`cat "${path}"`);
+                    } else if (imgExts.includes(ext)) {
+                      addLines([{ kind: 'info', text: `Rasm: ${name} (terminal da ko'rib bo'lmaydi)` }]);
+                    } else {
+                      addLines([{ kind: 'info', text: `Tanlandi: ${name}` }]);
+                    }
+                  }}
                 />
               )}
             </div>

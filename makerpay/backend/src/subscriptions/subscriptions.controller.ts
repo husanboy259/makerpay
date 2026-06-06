@@ -1,10 +1,28 @@
-import { Controller, Get, Post, Patch, Body, Param, Query, Req, UseGuards } from '@nestjs/common';
+import { Controller, Get, Post, Patch, Body, Param, Query, Req, UseGuards, Headers, HttpCode } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiBearerAuth } from '@nestjs/swagger';
 import { SubscriptionsService } from './subscriptions.service';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { RolesGuard } from '../auth/guards/roles.guard';
 import { Roles } from '../auth/decorators/roles.decorator';
 import { UserRole } from '../users/entities/user.entity';
+
+// ── Public webhook controller (no auth) ──────────────────────────────────────
+@Controller('subscriptions/webhook')
+export class SubscriptionWebhookController {
+  constructor(private readonly svc: SubscriptionsService) {}
+
+  @Post(':provider')
+  @HttpCode(200)
+  async handleWebhook(
+    @Param('provider') provider: string,
+    @Body() body: any,
+    @Headers('x-signature') sig?: string,
+    @Headers('x-tspay-signature') tsSig?: string,
+    @Headers('x-timestamp') timestamp?: string,
+  ) {
+    return this.svc.handleProviderWebhook(provider, body, sig || tsSig, timestamp);
+  }
+}
 
 @ApiTags('subscriptions')
 @ApiBearerAuth()
@@ -124,5 +142,58 @@ export class SubscriptionsController {
   @ApiOperation({ summary: 'Send invitation to startup' })
   async invite(@Req() req: any, @Param('id') id: string, @Body('invitationText') invitationText: string) {
     return this.svc.sendInvitation(id, req.user.id, invitationText);
+  }
+
+  // ─── Subscription Orders ────────────────────────────────────────
+
+  @Get('payment-info')
+  paymentInfo() {
+    return this.svc.getSubscriptionPaymentInfo();
+  }
+
+  @Post('order')
+  async createOrder(@Req() req: any, @Body('plan') plan: string) {
+    const merchantId = req.user.merchantId || req.merchant?.id;
+    return this.svc.createOrder(req.user.id, merchantId, plan);
+  }
+
+  @Post('order/:id/confirm-payment')
+  async submitProof(
+    @Req() req: any,
+    @Param('id') id: string,
+    @Body() body: { payerName: string; payerPhone: string },
+  ) {
+    return this.svc.submitPaymentProof(id, req.user.id, body.payerName, body.payerPhone);
+  }
+
+  @Get('order/:id/status')
+  async orderStatus(@Req() req: any, @Param('id') id: string) {
+    return this.svc.getOrderStatus(id, req.user.id);
+  }
+
+  @Get('my-orders')
+  async myOrders(@Req() req: any) {
+    return this.svc.getMyOrders(req.user.id);
+  }
+
+  @Get('admin/orders')
+  @UseGuards(RolesGuard)
+  @Roles(UserRole.ADMIN, UserRole.MANAGER)
+  async adminOrders(@Query('page') page = 1, @Query('limit') limit = 20, @Query('status') status?: string) {
+    return this.svc.getAllOrders(+page, +limit, status);
+  }
+
+  @Patch('admin/orders/:id/confirm')
+  @UseGuards(RolesGuard)
+  @Roles(UserRole.ADMIN, UserRole.MANAGER)
+  async adminConfirm(@Req() req: any, @Param('id') id: string, @Body('adminNote') adminNote?: string) {
+    return this.svc.adminConfirmOrder(id, req.user.id, adminNote);
+  }
+
+  @Patch('admin/orders/:id/reject')
+  @UseGuards(RolesGuard)
+  @Roles(UserRole.ADMIN, UserRole.MANAGER)
+  async adminReject(@Req() req: any, @Param('id') id: string, @Body('adminNote') adminNote: string) {
+    return this.svc.adminRejectOrder(id, req.user.id, adminNote);
   }
 }

@@ -157,16 +157,15 @@ export class ProvidersService {
   }
 
   async testConnection(merchantId: string, providerId: string): Promise<{ success: boolean; message: string }> {
-    const adapter = await this.getAdapter(merchantId, providerId);
     try {
-      // Try a lightweight status check with a fake ID — just tests auth
+      const adapter = await this.getAdapter(merchantId, providerId);
       await adapter.checkStatus('test_connection_check');
-      return { success: true, message: 'Connection successful' };
+      return { success: true, message: 'Ulanish muvaffaqiyatli' };
     } catch (error: any) {
       if (error.message?.includes('not found') || error.message?.includes('404')) {
-        return { success: true, message: 'Connection successful (provider reachable)' };
+        return { success: true, message: 'Provayder mavjud (ulanish ishlaydi)' };
       }
-      return { success: false, message: error.message };
+      return { success: false, message: error.message || 'Ulanish xatoligi' };
     }
   }
 

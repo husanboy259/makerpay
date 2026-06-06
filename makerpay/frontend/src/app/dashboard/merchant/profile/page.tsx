@@ -152,8 +152,20 @@ export default function ProfilePage() {
             <input className={`${inputCls} opacity-50 cursor-not-allowed`} value={user?.email || ''} disabled />
           </Field>
           <Field label="Telefon">
-            <input className={inputCls} placeholder="+998 90 000 00 00" value={profileForm.phone}
-              onChange={e => setProfileForm({ ...profileForm, phone: e.target.value })} />
+            <div className="relative">
+              <span className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 text-sm font-medium select-none">+998</span>
+              <input
+                className={`${inputCls} pl-16`}
+                placeholder="90 123 45 67"
+                value={profileForm.phone}
+                maxLength={12}
+                onChange={e => {
+                  const digits = e.target.value.replace(/\D/g, '').slice(0, 9);
+                  const formatted = digits.replace(/(\d{2})(\d{3})(\d{2})(\d{2})/, '$1 $2 $3 $4').trim();
+                  setProfileForm({ ...profileForm, phone: formatted });
+                }}
+              />
+            </div>
           </Field>
           <Field label="Telegram username">
             <div className="relative">
