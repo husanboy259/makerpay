@@ -1,5 +1,5 @@
 'use client';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { useAuthStore } from '@/store/auth.store';
@@ -7,13 +7,27 @@ import { authApi } from '@/lib/api';
 import { Eye, EyeOff, Loader2, ArrowLeft, Zap } from 'lucide-react';
 import TelegramLoginButton from '@/components/auth/TelegramLoginButton';
 
+const ROLE_ROUTES: Record<string, string> = {
+  admin:   '/dashboard/admin',
+  manager: '/dashboard/manager',
+  support: '/dashboard/support',
+  user:    '/dashboard/merchant',
+};
+
 export default function LoginPage() {
   const router = useRouter();
-  const { setAuth } = useAuthStore();
+  const { setAuth, token, user } = useAuthStore();
   const [form, setForm] = useState({ email: '', password: '' });
   const [showPwd, setShowPwd] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+
+  // Redirect already-logged-in users
+  useEffect(() => {
+    if (token && user) {
+      router.replace(ROLE_ROUTES[user.role] || '/dashboard/merchant');
+    }
+  }, [token, user, router]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -22,13 +36,7 @@ export default function LoginPage() {
     try {
       const res: any = await authApi.login(form);
       setAuth(res.user, res.accessToken);
-      const roleRoutes: Record<string, string> = {
-        admin:   '/dashboard/admin',
-        manager: '/dashboard/manager',
-        support: '/dashboard/support',
-        user:    '/dashboard/merchant',
-      };
-      router.push(roleRoutes[res.user.role] || '/dashboard/merchant');
+      router.push(ROLE_ROUTES[res.user.role] || '/dashboard/merchant');
     } catch (err: any) {
       setError(err?.message || "Login muvaffaqiyatsiz. Iltimos, qayta urinib ko'ring.");
     } finally {
@@ -137,7 +145,7 @@ export default function LoginPage() {
               <span className="text-xs text-gray-600">yoki</span>
               <div className="flex-1 h-px bg-white/10" />
             </div>
-            <a href={`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/api/v1'}/auth/google`}
+            <a href="/api/v1/auth/google"
               className="w-full flex items-center justify-center gap-3 py-3 rounded-xl border border-white/10 bg-white/5 hover:bg-white/10 transition-all text-sm font-semibold text-white">
               <svg width="18" height="18" viewBox="0 0 48 48">
                 <path fill="#FFC107" d="M43.6 20.5H42V20H24v8h11.3C33.7 32.9 29.3 36 24 36c-6.6 0-12-5.4-12-12s5.4-12 12-12c3.1 0 5.8 1.1 7.9 2.9l5.7-5.7C34 6.5 29.3 4 24 4 12.9 4 4 12.9 4 24s8.9 20 20 20 20-8.9 20-20c0-1.3-.1-2.6-.4-3.5z"/>
