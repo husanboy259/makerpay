@@ -5,7 +5,7 @@ import {
   LayoutDashboard, CreditCard, GitBranch, Key, Webhook,
   FileText, Users, ShieldCheck, BarChart2, Settings,
   LogOut, ChevronRight, HelpCircle, MessageSquare, Store, Rocket,
-  Send, Megaphone, Crown, Banknote, HardDrive, ArrowLeftRight, Tag,
+  Send, Megaphone, Crown, Banknote, HardDrive, ArrowLeftRight, Tag, X,
 } from 'lucide-react';
 import { useAuthStore } from '@/store/auth.store';
 import { useRouter } from 'next/navigation';
@@ -68,7 +68,7 @@ const roleLabels: Record<string, string> = {
   user:    'Merchant',
 };
 
-export function Sidebar() {
+export function Sidebar({ isOpen, onClose }: { isOpen?: boolean; onClose?: () => void }) {
   const pathname = usePathname();
   const router = useRouter();
   const { user, logout, viewMode, setViewMode } = useAuthStore();
@@ -86,16 +86,29 @@ export function Sidebar() {
   const handleLogout = () => { logout(); router.push('/login'); };
 
   return (
-    <aside className="w-64 h-screen bg-[#111] border-r border-white/10 text-white flex flex-col fixed left-0 top-0 z-40">
+    <>
+      {/* Mobile backdrop */}
+      {isOpen && (
+        <div className="fixed inset-0 bg-black/60 z-40 md:hidden" onClick={onClose} />
+      )}
+
+      <aside className={cn(
+        'w-64 h-screen bg-[#111] border-r border-white/10 text-white flex flex-col fixed left-0 top-0 z-50',
+        'transition-transform duration-300 ease-out md:translate-x-0',
+        isOpen ? 'translate-x-0' : '-translate-x-full',
+      )}>
       {/* Logo */}
-      <div className="px-6 py-5 border-b border-white/10">
-        <Link href="/" className="flex items-center gap-3">
+      <div className="px-6 py-5 border-b border-white/10 flex items-center justify-between">
+        <Link href="/" className="flex items-center gap-3" onClick={onClose}>
           <img src="/logo.png" alt="MakerPay" className="w-10 h-10 rounded-xl object-cover shrink-0" />
           <div>
             <div className="font-bold text-white text-base leading-none">MakerPay</div>
             <div className="text-gray-500 text-xs mt-0.5">Payment Platform</div>
           </div>
         </Link>
+        <button onClick={onClose} className="md:hidden p-1.5 text-gray-500 hover:text-white rounded-lg transition-colors">
+          <X className="w-5 h-5" />
+        </button>
       </div>
 
       {/* User info */}
@@ -136,7 +149,7 @@ export function Sidebar() {
         {menus.map(({ href, icon: Icon, label, premium }: any) => {
           const active = pathname === href || (href !== `/dashboard/${basePath}` && pathname.startsWith(href));
           return (
-            <Link key={href} href={href}
+            <Link key={href} href={href} onClick={onClose}
               className={cn(
                 'flex items-center gap-3 px-3 py-2 rounded-xl text-sm font-medium transition-colors group',
                 active ? 'bg-white text-black' : 'text-gray-400 hover:bg-white/10 hover:text-white',
@@ -162,6 +175,7 @@ export function Sidebar() {
           <span>Chiqish</span>
         </button>
       </div>
-    </aside>
+      </aside>
+    </>
   );
 }

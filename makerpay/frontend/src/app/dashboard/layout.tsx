@@ -4,7 +4,7 @@ import { useRouter } from 'next/navigation';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useAuthStore } from '@/store/auth.store';
 import { Sidebar } from '@/components/layouts/Sidebar';
-import { Bell, Search, CheckCheck, MessageCircle, X, Send, Bot, Loader2 } from 'lucide-react';
+import { Bell, Search, CheckCheck, MessageCircle, X, Send, Bot, Loader2, Menu } from 'lucide-react';
 import api from '@/lib/api';
 
 // ─── Chatbot Widget ──────────────────────────────────────────────────────────
@@ -192,6 +192,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   const router = useRouter();
   const { user, token } = useAuthStore();
   const [hydrated, setHydrated] = useState(false);
+  const [sidebarOpen, setSidebarOpen] = useState(false);
 
   useEffect(() => { setHydrated(true); }, []);
 
@@ -205,24 +206,30 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
 
   return (
     <div className="flex min-h-screen bg-black">
-      <Sidebar />
-      <div className="flex-1 ml-64 flex flex-col min-h-screen">
-        <header className="h-16 bg-[#111] border-b border-white/10 flex items-center justify-between px-6 sticky top-0 z-30">
-          <div className="flex items-center gap-3 bg-white/5 border border-white/10 rounded-xl px-3 py-2 w-72">
-            <Search className="w-4 h-4 text-gray-500" />
-            <input
-              placeholder="Qidirish..."
-              className="bg-transparent text-sm text-gray-300 outline-none flex-1 placeholder-gray-600"
-            />
+      <Sidebar isOpen={sidebarOpen} onClose={() => setSidebarOpen(false)} />
+      <div className="flex-1 md:ml-64 flex flex-col min-h-screen min-w-0">
+        <header className="h-16 bg-[#111] border-b border-white/10 flex items-center justify-between gap-3 px-4 md:px-6 sticky top-0 z-30">
+          <div className="flex items-center gap-2 flex-1 min-w-0">
+            <button onClick={() => setSidebarOpen(true)}
+              className="md:hidden p-2 -ml-1 text-gray-400 hover:text-white hover:bg-white/10 rounded-xl transition-colors shrink-0">
+              <Menu className="w-5 h-5" />
+            </button>
+            <div className="hidden sm:flex items-center gap-3 bg-white/5 border border-white/10 rounded-xl px-3 py-2 w-full max-w-72">
+              <Search className="w-4 h-4 text-gray-500 shrink-0" />
+              <input
+                placeholder="Qidirish..."
+                className="bg-transparent text-sm text-gray-300 outline-none flex-1 min-w-0 placeholder-gray-600"
+              />
+            </div>
           </div>
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-3 shrink-0">
             <NotificationBell />
-            <div className="w-9 h-9 bg-white rounded-full flex items-center justify-center text-sm font-bold text-black">
+            <div className="w-9 h-9 bg-white rounded-full flex items-center justify-center text-sm font-bold text-black shrink-0">
               {user.fullName?.[0]?.toUpperCase() || 'U'}
             </div>
           </div>
         </header>
-        <main className="flex-1 p-6">
+        <main className="flex-1 p-4 md:p-6 min-w-0 overflow-x-hidden">
           {children}
         </main>
       </div>
