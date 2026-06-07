@@ -242,9 +242,11 @@ export class SubscriptionsService {
 
   private getPlatformAdapter(providerChoice?: string) {
     const provider = (providerChoice || process.env.PLATFORM_PROVIDER || 'tspay').toLowerCase();
-    const apiKey    = process.env[`PLATFORM_${provider.toUpperCase()}_API_KEY`]    || process.env.TSPAY_API_KEY    || '';
-    const secretKey = process.env[`PLATFORM_${provider.toUpperCase()}_SECRET_KEY`] || process.env.TSPAY_SECRET_KEY || '';
-    const merchantId = process.env[`PLATFORM_${provider.toUpperCase()}_MERCHANT_ID`] || process.env.TSPAY_MERCHANT_ID || '';
+    const upper = provider.toUpperCase();
+    // Prefer PLATFORM_<PROVIDER>_* overrides, fall back to the provider's generic <PROVIDER>_* keys
+    const apiKey     = process.env[`PLATFORM_${upper}_API_KEY`]     || process.env[`${upper}_API_KEY`]     || '';
+    const secretKey  = process.env[`PLATFORM_${upper}_SECRET_KEY`]  || process.env[`${upper}_SECRET_KEY`]  || '';
+    const merchantId = process.env[`PLATFORM_${upper}_MERCHANT_ID`] || process.env[`${upper}_MERCHANT_ID`] || '';
 
     if (provider === 'inpay') {
       if (!merchantId || !secretKey) return null;
