@@ -91,7 +91,7 @@ export const storageApi = {
   upload:     (file: File)          => {
     const form = new FormData();
     form.append('file', file);
-    return api.post('/storage/upload', form, { headers: { 'Content-Type': 'multipart/form-data' } });
+    return api.post('/storage/upload', form);
   },
   deleteFile: (id: string)          => api.delete(`/storage/files/${id}`),
   // Workspace / deploy
