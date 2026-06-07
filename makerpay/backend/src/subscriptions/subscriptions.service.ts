@@ -6,6 +6,7 @@ import { Notification } from './entities/notification.entity';
 import { SubscriptionOrder, PLAN_PRICES } from './entities/subscription-order.entity';
 import { TsPayAdapter } from '../providers/adapters/tspay.adapter';
 import { QulayPayAdapter } from '../providers/adapters/qulaypay.adapter';
+import { InPayAdapter } from '../providers/adapters/inpay.adapter';
 
 @Injectable()
 export class SubscriptionsService {
@@ -239,21 +240,26 @@ export class SubscriptionsService {
 
   private readonly logger = new Logger(SubscriptionsService.name);
 
-  private getPlatformAdapter() {
-    const provider = process.env.PLATFORM_PROVIDER || 'tspay';
+  private getPlatformAdapter(providerChoice?: string) {
+    const provider = (providerChoice || process.env.PLATFORM_PROVIDER || 'tspay').toLowerCase();
     const apiKey    = process.env[`PLATFORM_${provider.toUpperCase()}_API_KEY`]    || process.env.TSPAY_API_KEY    || '';
     const secretKey = process.env[`PLATFORM_${provider.toUpperCase()}_SECRET_KEY`] || process.env.TSPAY_SECRET_KEY || '';
     const merchantId = process.env[`PLATFORM_${provider.toUpperCase()}_MERCHANT_ID`] || process.env.TSPAY_MERCHANT_ID || '';
 
-    if (!apiKey) return null;
+    if (provider === 'inpay') {
+      if (!merchantId || !secretKey) return null;
+    } else if (!apiKey) {
+      return null;
+    }
 
     const testMode = process.env.PLATFORM_TEST_MODE === 'true';
     const credentials = { apiKey, secretKey, merchantId, testMode, extraConfig: {} };
-    return provider === 'qulaypay' ? { adapter: new QulayPayAdapter(credentials), provider } :
-                                     { adapter: new TsPayAdapter(credentials), provider };
+    if (provider === 'inpay') return { adapter: new InPayAdapter(credentials), provider };
+    if (provider === 'qulaypay') return { adapter: new QulayPayAdapter(credentials), provider };
+    return { adapter: new TsPayAdapter(credentials), provider };
   }
 
-  async createOrder(userId: string, merchantId: string, plan: string) {
+  async createOrder(userId: string, merchantId: string, plan: string, providerChoice?: string) {
     const amount = PLAN_PRICES[plan];
     if (!amount) throw new BadRequestException(`Noma'lum tarif: ${plan}`);
 
@@ -264,7 +270,7 @@ export class SubscriptionsService {
       this.orderRepo.create({ userId, merchantId, plan, amount, expiresAt }),
     );
 
-    const platform = this.getPlatformAdapter();
+    const platform = this.getPlatformAdapter(providerChoice);
     if (platform) {
       try {
         const baseUrl = process.env.BASE_URL || 'https://makerpay.uz';
@@ -299,9 +305,7 @@ export class SubscriptionsService {
         return { ...order, status: 'processing', paymentUrl: result.paymentUrl, providerPaymentId: result.providerPaymentId };
       } catch (err: any) {
         this.logger.warn(`Payment provider error, falling back to manual: ${err.message}`);
-        if (platform.provider === 'tspay') {
-          await this.orderRepo.update(order.id, { providerPaymentId: null, paymentProvider: null });
-        }
+        await this.orderRepo.update(order.id, { providerPaymentId: null, paymentProvider: null });
       }
     }
 
@@ -313,7 +317,7 @@ export class SubscriptionsService {
       return this.handleTsPayWebhook(payload, signature, timestamp);
     }
 
-    const platform = this.getPlatformAdapter();
+    const platform = this.getPlatformAdapter(provider);
     if (platform) {
       try {
         const result = await platform.adapter.handleWebhook(payload, signature);

@@ -152,9 +152,9 @@ export class SubscriptionsController {
   }
 
   @Post('order')
-  async createOrder(@Req() req: any, @Body('plan') plan: string) {
+  async createOrder(@Req() req: any, @Body() body: { plan: string; provider?: string }) {
     const merchantId = req.user.merchantId || req.merchant?.id;
-    return this.svc.createOrder(req.user.id, merchantId, plan);
+    return this.svc.createOrder(req.user.id, merchantId, body.plan, body.provider);
   }
 
   @Post('order/:id/confirm-payment')

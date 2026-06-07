@@ -1,5 +1,5 @@
 'use client';
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import api, { merchantsApi } from '@/lib/api';
 import { useQuery } from '@tanstack/react-query';
@@ -8,6 +8,11 @@ import {
   ArrowLeft, Crown, Zap, AlertTriangle, Clock,
 } from 'lucide-react';
 import Link from 'next/link';
+
+const PROVIDERS = [
+  { id: 'tspay', name: 'TSPay', emoji: '🔵', desc: "Karta orqali to'lov" },
+  { id: 'inpay', name: 'inPAY', emoji: '🟢', desc: 'Click · Payme · Karta' },
+];
 
 const PLAN_META: Record<string, { label: string; price: string; color: string; emoji: string; features: string[] }> = {
   basic:      { label: 'BASIC',      price: '8 000',   color: 'text-blue-400',   emoji: '🔵', features: ["1 000 so'rov/oy", "2 ta do'kon", "2 ta provayder", "2 GB storage"] },
@@ -22,7 +27,8 @@ export default function UpgradePage() {
   const plan = params.get('plan') || '';
   const meta = PLAN_META[plan];
 
-  const [step, setStep] = useState<'payment' | 'proof' | 'done'>('payment');
+  const [step, setStep] = useState<'provider' | 'payment' | 'proof' | 'done'>('provider');
+  const [provider, setProvider] = useState('');
   const [payInfo, setPayInfo] = useState<any>(null);
   const [orderId, setOrderId] = useState('');
   const [payer, setPayer] = useState({ name: '', phone: '' });
@@ -46,25 +52,27 @@ export default function UpgradePage() {
     api.get('/subscriptions/payment-info').then((r: any) => setPayInfo(r)).catch(() => {});
   }, []);
 
-  const createOrder = useCallback(async () => {
+  const startPayment = async (providerId: string) => {
     if (!plan || !meta) return;
+    setProvider(providerId);
+    setError('');
     setCreating(true);
     try {
-      const order: any = await api.post('/subscriptions/order', { plan });
+      const order: any = await api.post('/subscriptions/order', { plan, provider: providerId });
       setOrderId(order.id);
       // If provider returned a payment URL → redirect immediately
       if (order.paymentUrl) {
         window.location.href = order.paymentUrl;
         return;
       }
+      // No gateway available — fall back to manual card transfer
+      setStep('payment');
     } catch (e: any) {
       setError(e?.message || 'Order yaratishda xatolik');
     } finally {
       setCreating(false);
     }
-  }, [plan, meta]);
-
-  useEffect(() => { createOrder(); }, [createOrder]);
+  };
 
   // Poll order status when on proof step
   useEffect(() => {
@@ -151,7 +159,32 @@ export default function UpgradePage() {
         </div>
       )}
 
-      {step === 'proof' ? (
+      {step === 'provider' ? (
+        /* Choose payment gateway */
+        <div className="bg-[#111] border border-white/10 rounded-2xl p-6 space-y-4">
+          <div>
+            <h2 className="text-base font-bold text-white mb-1">To'lov usulini tanlang</h2>
+            <p className="text-xs text-gray-500">Quyidagi tizimlardan birini tanlang — to'lov sahifasiga yo'naltirilasiz</p>
+          </div>
+          <div className="space-y-3">
+            {PROVIDERS.map(p => (
+              <button key={p.id}
+                onClick={() => startPayment(p.id)}
+                disabled={creating}
+                className="w-full flex items-center gap-4 p-4 rounded-2xl border border-white/10 bg-white/5 hover:border-white/30 transition-all disabled:opacity-50">
+                <div className="w-12 h-12 rounded-xl bg-white/5 flex items-center justify-center text-2xl shrink-0">{p.emoji}</div>
+                <div className="flex-1 text-left">
+                  <p className="font-bold text-white">{p.name}</p>
+                  <p className="text-gray-500 text-sm">{p.desc}</p>
+                </div>
+                {creating && provider === p.id
+                  ? <Loader2 className="w-5 h-5 animate-spin text-gray-400" />
+                  : <Zap className="w-4 h-4 text-gray-500" />}
+              </button>
+            ))}
+          </div>
+        </div>
+      ) : step === 'proof' ? (
         /* Waiting for admin confirmation */
         <div className="bg-[#111] border border-white/10 rounded-2xl p-6 text-center space-y-4">
           <Clock className="w-10 h-10 text-yellow-400 mx-auto" />
