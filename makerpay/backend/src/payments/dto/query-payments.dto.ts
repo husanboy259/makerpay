@@ -1,13 +1,17 @@
 import { IsOptional, IsString, IsNumber, IsDateString, IsIn, Min, Max } from 'class-validator';
-import { Type } from 'class-transformer';
+import { Type, Transform } from 'class-transformer';
+
+const emptyToUndefined = ({ value }: { value: string }) => (value === '' ? undefined : value);
 
 export class QueryPaymentsDto {
   @IsOptional()
+  @Transform(emptyToUndefined)
   @IsIn(['pending', 'processing', 'completed', 'failed', 'refunded', 'cancelled'])
   status?: string;
 
   @IsOptional()
-  @IsIn(['tspay', 'paynest', 'tulovpay'])
+  @Transform(emptyToUndefined)
+  @IsIn(['tspay', 'paynest', 'tulovpay', 'mirpay', 'qulaypay', 'inpay'])
   providerName?: string;
 
   @IsOptional()
