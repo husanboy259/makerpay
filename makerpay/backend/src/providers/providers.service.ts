@@ -15,6 +15,7 @@ import { PaynestAdapter } from './adapters/paynest.adapter';
 import { TulovpayAdapter } from './adapters/tulovpay.adapter';
 import { MirPayAdapter } from './adapters/mirpay.adapter';
 import { QulayPayAdapter } from './adapters/qulaypay.adapter';
+import { InPayAdapter } from './adapters/inpay.adapter';
 import { ConnectProviderDto } from './dto/connect-provider.dto';
 import { CreateApiKeyDto } from './dto/create-api-key.dto';
 
@@ -229,6 +230,7 @@ export class ProvidersService {
       case 'tulovpay': return new TulovpayAdapter(credentials);
       case 'mirpay':   return new MirPayAdapter(credentials);
       case 'qulaypay': return new QulayPayAdapter(credentials);
+      case 'inpay':    return new InPayAdapter(credentials);
       default:         throw new BadRequestException(`Unsupported provider: ${mp.providerName}`);
     }
   }

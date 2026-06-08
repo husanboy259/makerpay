@@ -39,6 +39,18 @@ const PROVIDER_META: Record<string, {
       </div>
     ),
   },
+  inpay: {
+    name: 'inPAY', slug: 'inpay', site: 'inpay.uz', type: 'user',
+    hasMakerpayOption: true,
+    color: 'text-emerald-400', bg: 'bg-emerald-500/10', border: 'border-emerald-500/30',
+    tagline: 'Click · Payme · Karta orqali tezkor to\'lovlar',
+    features: ['Click & Payme', 'Bank kartasi', 'API', 'Webhook'],
+    logo: (
+      <div className="w-full h-full bg-gradient-to-br from-emerald-500 to-teal-700 flex items-center justify-center">
+        <span className="text-white font-black text-sm tracking-tight">in</span>
+      </div>
+    ),
+  },
   mirpay: {
     name: 'MirPay', slug: 'mirpay', site: 'mirpay.uz', type: 'makerpay',
     color: 'text-red-400', bg: 'bg-red-500/10', border: 'border-red-500/30',

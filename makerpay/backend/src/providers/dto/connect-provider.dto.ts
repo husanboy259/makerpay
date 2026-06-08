@@ -1,7 +1,7 @@
 import { IsString, IsBoolean, IsOptional, IsIn, IsUrl } from 'class-validator';
 
 export class ConnectProviderDto {
-  @IsIn(['tspay', 'qulaypay'])
+  @IsIn(['tspay', 'qulaypay', 'inpay'])
   providerName: string;
 
   @IsString()
