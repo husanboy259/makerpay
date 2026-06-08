@@ -10,12 +10,14 @@ import {
   HttpCode,
   HttpStatus,
 } from '@nestjs/common';
-import { ApiTags, ApiOperation, ApiBearerAuth } from '@nestjs/swagger';
+import { ApiTags, ApiOperation, ApiBearerAuth, ApiSecurity } from '@nestjs/swagger';
 import { PaymentsService } from './payments.service';
 import { CreatePaymentDto } from './dto/create-payment.dto';
+import { CreatePaymentPublicDto } from './dto/create-payment-public.dto';
 import { RefundPaymentDto } from './dto/refund-payment.dto';
 import { QueryPaymentsDto } from './dto/query-payments.dto';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
+import { ApiKeyGuard } from '../auth/guards/api-key.guard';
 
 // ─── Public endpoints (no auth) ──────────────────────────────────────────────
 @ApiTags('payments-public')
@@ -37,6 +39,31 @@ export class PaymentsPublicController {
     @Body() body: { customerName?: string; customerPhone?: string },
   ) {
     return this.paymentsService.manualConfirm(id, body.customerName, body.customerPhone);
+  }
+}
+
+// ─── API-key protected endpoint (for embeddable checkout / SDK) ─────────────
+@ApiTags('payments-api')
+@ApiSecurity('x-api-key')
+@Controller('payments/api')
+export class PaymentsApiController {
+  constructor(private readonly paymentsService: PaymentsService) {}
+
+  @Post('create')
+  @UseGuards(ApiKeyGuard)
+  @ApiOperation({ summary: 'Create a payment using a merchant API key' })
+  async createViaApiKey(@Req() req: any, @Body() dto: CreatePaymentPublicDto) {
+    const createDto: CreatePaymentDto = {
+      amount: dto.amount,
+      currency: dto.currency,
+      externalOrderId: dto.orderId,
+      providerName: dto.providerName,
+      description: dto.description,
+      returnUrl: dto.successUrl,
+      callbackUrl: dto.callbackUrl,
+      customerPhone: dto.customerPhone,
+    };
+    return this.paymentsService.createPayment(req.merchant.id, createDto, req.apiKey.id);
   }
 }
 
