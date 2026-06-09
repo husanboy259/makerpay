@@ -392,8 +392,12 @@ export class SubscriptionsService {
       const order = await this.orderRepo.findOne({
         where: { providerPaymentId: orderId, paymentProvider: 'tspay' },
       });
-      if (!order) return { success: false };
-      return { success: true, transaction_id: order.id };
+      if (order) return { success: true, transaction_id: order.id };
+      const payment = await this.paymentRepo.findOne({
+        where: { providerPaymentId: orderId, providerName: 'tspay' },
+      });
+      if (!payment) return { success: false };
+      return { success: true, transaction_id: payment.id };
     }
 
     if (method === 'performTransaction') {
