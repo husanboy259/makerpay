@@ -9,6 +9,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, DataSource } from 'typeorm';
 import { v4 as uuidv4 } from 'uuid';
 import { Payment, PaymentStatus } from './entities/payment.entity';
+import { TsPayAdapter } from '../providers/adapters/tspay.adapter';
 import { ProvidersService } from '../providers/providers.service';
 import { WebhooksService } from '../webhooks/webhooks.service';
 import { Merchant } from '../merchants/entities/merchant.entity';
@@ -79,6 +80,13 @@ export class PaymentsService {
     });
 
     await this.paymentRepo.save(payment);
+
+    // TSPay verifies orders synchronously via webhook during createPayment.
+    // Pre-store the numeric order_id so checkPerform can find this payment.
+    if (mp.providerName === 'tspay') {
+      const numericId = TsPayAdapter.uuidToOrderId(payment.id);
+      await this.paymentRepo.update(payment.id, { providerPaymentId: numericId.toString() });
+    }
 
     // Call provider
     try {

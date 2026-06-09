@@ -4,6 +4,7 @@ import { Repository } from 'typeorm';
 import { MerchantSubscription, TrialApplication, PLAN_LIMITS } from './entities/subscription.entity';
 import { Notification } from './entities/notification.entity';
 import { SubscriptionOrder, PLAN_PRICES } from './entities/subscription-order.entity';
+import { Payment } from '../payments/entities/payment.entity';
 import { TsPayAdapter } from '../providers/adapters/tspay.adapter';
 import { QulayPayAdapter } from '../providers/adapters/qulaypay.adapter';
 import { InPayAdapter } from '../providers/adapters/inpay.adapter';
@@ -19,6 +20,8 @@ export class SubscriptionsService {
     private readonly notifRepo: Repository<Notification>,
     @InjectRepository(SubscriptionOrder)
     private readonly orderRepo: Repository<SubscriptionOrder>,
+    @InjectRepository(Payment)
+    private readonly paymentRepo: Repository<Payment>,
   ) {}
 
   private async notify(userId: string, title: string, message: string, type: string, actionUrl?: string) {
@@ -367,12 +370,19 @@ export class SubscriptionsService {
       const order = await this.orderRepo.findOne({
         where: { providerPaymentId: orderId, paymentProvider: 'tspay' },
       });
-      if (!order) {
+      if (order) {
+        if (Math.abs(order.amount - Number(params.amount)) > 1) {
+          return { allow: false, reason: 'Summa mos kelmaydi' };
+        }
+        return { allow: true };
+      }
+      // Also check regular payments (payment.providerPaymentId is pre-set to numeric order_id)
+      const payment = await this.paymentRepo.findOne({
+        where: { providerPaymentId: orderId, providerName: 'tspay' },
+      });
+      if (!payment) {
         this.logger.warn(`TSPay checkPerform: order not found (order_id=${orderId})`);
         return { allow: false, reason: 'Order topilmadi' };
-      }
-      if (Math.abs(order.amount - Number(params.amount)) > 1) {
-        return { allow: false, reason: 'Summa mos kelmaydi' };
       }
       return { allow: true };
     }
