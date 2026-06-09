@@ -205,21 +205,24 @@ export class ProvidersService {
   private buildAdapter(mp: MerchantProvider): BasePaymentAdapter {
     let apiKey: string;
     let secretKey: string;
+    let merchantId: string | undefined;
 
     if (mp.connectionType === ConnectionType.MAKERPAY) {
       const envPrefix = mp.providerName.toUpperCase();
       apiKey = process.env[`${envPrefix}_API_KEY`] || '';
       secretKey = process.env[`${envPrefix}_SECRET_KEY`] || '';
+      merchantId = process.env[`${envPrefix}_MERCHANT_ID`] || mp.providerMerchantId;
     } else {
       const encKey = process.env.ENCRYPTION_KEY || 'default-key-change-in-production-32c';
       apiKey = this.decrypt(mp.apiKey, encKey);
       secretKey = this.decrypt(mp.secretKey, encKey);
+      merchantId = mp.providerMerchantId;
     }
 
     const credentials = {
       apiKey,
       secretKey,
-      merchantId: mp.providerMerchantId,
+      merchantId,
       testMode: mp.testMode,
       extraConfig: mp.extraConfig,
     };
