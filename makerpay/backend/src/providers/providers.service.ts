@@ -16,6 +16,7 @@ import { TulovpayAdapter } from './adapters/tulovpay.adapter';
 import { MirPayAdapter } from './adapters/mirpay.adapter';
 import { QulayPayAdapter } from './adapters/qulaypay.adapter';
 import { InPayAdapter } from './adapters/inpay.adapter';
+import { SmartPayAdapter } from './adapters/smartpay.adapter';
 import { ConnectProviderDto } from './dto/connect-provider.dto';
 import { CreateApiKeyDto } from './dto/create-api-key.dto';
 
@@ -127,7 +128,7 @@ export class ProvidersService {
   }
 
   async activateMakerpayProvider(merchantId: string, providerName: string) {
-    const MAKERPAY_PROVIDERS = ['mirpay', 'paynest', 'tspay', 'qulaypay'];
+    const MAKERPAY_PROVIDERS = ['mirpay', 'paynest', 'tspay', 'qulaypay', 'inpay', 'smartpay'];
     if (!MAKERPAY_PROVIDERS.includes(providerName)) {
       throw new BadRequestException(`${providerName} is not a Makerpay partnership provider`);
     }
@@ -234,6 +235,7 @@ export class ProvidersService {
       case 'mirpay':   return new MirPayAdapter(credentials);
       case 'qulaypay': return new QulayPayAdapter(credentials);
       case 'inpay':    return new InPayAdapter(credentials);
+      case 'smartpay': return new SmartPayAdapter(credentials);
       default:         throw new BadRequestException(`Unsupported provider: ${mp.providerName}`);
     }
   }

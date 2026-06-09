@@ -24,18 +24,8 @@ const PROVIDER_META: Record<string, {
     tagline: "O'zbekistoning ishonchli to'lov platforma",
     features: ["To'lov sahifasi", 'Webhook', 'Refund', 'API'],
     logo: (
-      <img src="/tspay-logo.svg" alt="TSPay" className="w-full h-full object-cover" />
-    ),
-  },
-  qulaypay: {
-    name: 'QulayPay', slug: 'qulaypay', site: 'qulaypay.uz', type: 'user',
-    hasMakerpayOption: true,
-    color: 'text-cyan-400', bg: 'bg-cyan-500/10', border: 'border-cyan-500/30',
-    tagline: "Eng qulay to'lov tizimi — 15 daqiqada integratsiya",
-    features: ['Click & Payme', 'Bank kartasi', 'API', 'Webhook'],
-    logo: (
-      <div className="w-full h-full bg-white flex items-center justify-center p-1">
-        <img src="/qulaypay-logo.svg" alt="QulayPay" className="w-full h-full object-contain" />
+      <div className="w-full h-full bg-[#1d4ed8] flex items-center justify-center">
+        <img src="/tspay-logo.svg" alt="TSPay" className="w-full h-full object-contain" />
       </div>
     ),
   },
@@ -47,7 +37,19 @@ const PROVIDER_META: Record<string, {
     features: ['Click & Payme', 'Bank kartasi', 'API', 'Webhook'],
     logo: (
       <div className="w-full h-full bg-gradient-to-br from-emerald-500 to-teal-700 flex items-center justify-center">
-        <span className="text-white font-black text-sm tracking-tight">in</span>
+        <span className="text-white font-black text-base tracking-tight">iP</span>
+      </div>
+    ),
+  },
+  smartpay: {
+    name: 'SmartPay', slug: 'smartpay', site: 'smartpay.uz', type: 'user',
+    hasMakerpayOption: true,
+    color: 'text-violet-400', bg: 'bg-violet-500/10', border: 'border-violet-500/30',
+    tagline: "Tez va xavfsiz to'lov tizimi",
+    features: ['Karta', 'Click & Payme', 'API', 'Webhook'],
+    logo: (
+      <div className="w-full h-full bg-gradient-to-br from-violet-600 to-purple-800 flex items-center justify-center">
+        <span className="text-white font-black text-sm tracking-tight">SP</span>
       </div>
     ),
   },

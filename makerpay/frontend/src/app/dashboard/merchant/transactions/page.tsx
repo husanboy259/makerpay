@@ -168,11 +168,8 @@ function CreatePaymentModal({ onClose, onCreated }: { onClose: () => void; onCre
                   className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white text-sm focus:outline-none focus:border-white/30 transition-all">
                   <option value="">Avtomatik</option>
                   <option value="tspay">TSPay</option>
-                  <option value="qulaypay">QulayPay</option>
                   <option value="inpay">inPAY</option>
-                  <option value="mirpay">MirPay</option>
-                  <option value="paynest">Paynest</option>
-                  <option value="tulovpay">TulovPay</option>
+                  <option value="smartpay">SmartPay</option>
                 </select>
               </div>
             </div>
@@ -294,11 +291,8 @@ export default function TransactionsPage() {
             onChange={e => setFilters({ ...filters, providerName: e.target.value, page: 1 })}>
             <option value="">Barcha provayderlar</option>
             <option value="tspay">TSPay</option>
-            <option value="qulaypay">QulayPay</option>
             <option value="inpay">inPAY</option>
-            <option value="mirpay">MirPay</option>
-            <option value="paynest">Paynest</option>
-            <option value="tulovpay">TulovPay</option>
+            <option value="smartpay">SmartPay</option>
           </select>
           {(filters.status || filters.providerName || filters.search) && (
             <button onClick={() => setFilters({ status: '', providerName: '', search: '', page: 1 })}
