@@ -26,7 +26,10 @@ export class TsPayAdapter extends BasePaymentAdapter {
     this.http = axios.create({
       baseURL,
       timeout: 30000,
-      headers: { 'Content-Type': 'application/json' },
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Token ${credentials.apiKey}`,
+      },
     });
   }
 
@@ -52,8 +55,8 @@ export class TsPayAdapter extends BasePaymentAdapter {
         rawResponse: data,
       };
     } catch (error: any) {
-      this.logger.error(`TSPay createPayment error: ${error.message}`);
-      throw new Error(`TSPay error: ${error.response?.data?.detail || error.message}`);
+      this.logger.error(`TSPay createPayment error: ${JSON.stringify(error.response?.data)} status=${error.response?.status}`);
+      throw new Error(`TSPay error: ${JSON.stringify(error.response?.data) || error.message}`);
     }
   }
 
