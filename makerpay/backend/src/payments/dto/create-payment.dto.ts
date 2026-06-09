@@ -32,7 +32,7 @@ export class CreatePaymentDto {
 
   @ApiProperty({ required: false })
   @IsOptional()
-  @IsIn(['tspay', 'paynest', 'tulovpay', 'mirpay', 'qulaypay', 'inpay'])
+  @IsIn(['tspay', 'paynest', 'tulovpay', 'mirpay', 'qulaypay', 'inpay', 'smartpay'])
   providerName?: string;
 
   @ApiProperty({ example: 'Order payment', required: false })

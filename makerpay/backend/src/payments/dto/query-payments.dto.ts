@@ -11,7 +11,7 @@ export class QueryPaymentsDto {
 
   @IsOptional()
   @Transform(emptyToUndefined)
-  @IsIn(['tspay', 'paynest', 'tulovpay', 'mirpay', 'qulaypay', 'inpay'])
+  @IsIn(['tspay', 'paynest', 'tulovpay', 'mirpay', 'qulaypay', 'inpay', 'smartpay'])
   providerName?: string;
 
   @IsOptional()
