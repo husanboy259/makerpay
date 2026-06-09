@@ -98,7 +98,11 @@ function CreatePaymentModal({ onClose, onCreated }: { onClose: () => void; onCre
       returnUrl: form.returnUrl || undefined,
       providerName: form.providerName || undefined,
     }),
-    onSuccess: (res: any) => { setResult(res); onCreated(); },
+    onSuccess: (res: any) => {
+      setResult(res);
+      onCreated();
+      if (res?.paymentUrl) window.open(res.paymentUrl, '_blank');
+    },
     onError: (e: any) => setError(e?.message || 'Xatolik yuz berdi'),
   });
 
