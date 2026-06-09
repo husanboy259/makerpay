@@ -175,7 +175,7 @@ export class ProvidersService {
   async getAdapter(merchantId: string, providerId: string): Promise<BasePaymentAdapter> {
     const mp = await this.mpRepo.findOne({
       where: { id: providerId, merchantId },
-      select: ['id', 'providerName', 'apiKey', 'secretKey', 'providerMerchantId', 'testMode', 'extraConfig'],
+      select: ['id', 'providerName', 'connectionType', 'apiKey', 'secretKey', 'providerMerchantId', 'testMode', 'extraConfig'],
     });
     if (!mp) throw new NotFoundException('Provider connection not found');
 
@@ -185,7 +185,7 @@ export class ProvidersService {
   async getDefaultAdapter(merchantId: string): Promise<{ adapter: BasePaymentAdapter; mp: MerchantProvider }> {
     const mp = await this.mpRepo.findOne({
       where: { merchantId, isDefault: true, status: ProviderStatus.ACTIVE },
-      select: ['id', 'providerName', 'apiKey', 'secretKey', 'providerMerchantId', 'testMode', 'extraConfig'],
+      select: ['id', 'providerName', 'connectionType', 'apiKey', 'secretKey', 'providerMerchantId', 'testMode', 'extraConfig'],
     });
     if (!mp) throw new BadRequestException('No default payment provider configured');
 
@@ -195,7 +195,7 @@ export class ProvidersService {
   async getAdapterByProviderName(merchantId: string, providerName: string): Promise<{ adapter: BasePaymentAdapter; mp: MerchantProvider }> {
     const mp = await this.mpRepo.findOne({
       where: { merchantId, providerName, status: ProviderStatus.ACTIVE },
-      select: ['id', 'providerName', 'apiKey', 'secretKey', 'providerMerchantId', 'testMode', 'extraConfig'],
+      select: ['id', 'providerName', 'connectionType', 'apiKey', 'secretKey', 'providerMerchantId', 'testMode', 'extraConfig'],
     });
     if (!mp) throw new NotFoundException(`Provider ${providerName} not connected`);
 
