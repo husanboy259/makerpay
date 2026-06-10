@@ -1,11 +1,11 @@
 'use client';
 import { useState, useEffect } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { authApi, merchantsApi } from '@/lib/api';
+import { authApi, merchantsApi, storageApi } from '@/lib/api';
 import { useAuthStore } from '@/store/auth.store';
 import {
   Loader2, User, Building2, Shield, Send,
-  Instagram, Linkedin, Globe, Calendar, Users, CheckCircle,
+  Instagram, Linkedin, Globe, Calendar, Users, CheckCircle, Camera,
 } from 'lucide-react';
 
 function Section({ icon: Icon, title, subtitle, color = 'bg-white/5', children }: any) {
@@ -44,6 +44,8 @@ export default function ProfilePage() {
   const [saved, setSaved] = useState<string | null>(null);
   const [saveError, setSaveError] = useState('');
   const [pwdError, setPwdError] = useState('');
+  const [avatarUploading, setAvatarUploading] = useState(false);
+  const [avatarError, setAvatarError] = useState('');
 
   const [profileForm, setProfileForm] = useState({
     fullName: '', phone: '', telegramUsername: '',
@@ -104,6 +106,26 @@ export default function ProfilePage() {
     try { const r: any = await authApi.updateProfile(profileForm); updateUser(r); flash('profile'); } catch {}
   };
 
+  const handleAvatarChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    e.target.value = '';
+    if (!file) return;
+    if (!file.type.startsWith('image/')) { setAvatarError("Faqat rasm fayl yuklash mumkin"); return; }
+
+    setAvatarError('');
+    setAvatarUploading(true);
+    try {
+      const uploaded: any = await storageApi.upload(file);
+      const r: any = await authApi.updateProfile({ avatarUrl: uploaded.fileUrl });
+      updateUser(r);
+      flash('avatar');
+    } catch (e: any) {
+      setAvatarError(e?.message || "Rasm yuklashda xatolik");
+    } finally {
+      setAvatarUploading(false);
+    }
+  };
+
   const saveMerchant = async () => {
     setSaveError('');
     try {
@@ -143,6 +165,27 @@ export default function ProfilePage() {
 
       {/* ── Personal info ── */}
       <Section icon={User} title="Shaxsiy ma'lumotlar">
+        <div className="flex items-center gap-4 mb-5 pb-5 border-b border-white/10">
+          <div className="relative w-16 h-16 shrink-0">
+            {user?.avatarUrl ? (
+              <img src={user.avatarUrl} alt={user.fullName} className="w-16 h-16 rounded-full object-cover border border-white/20" />
+            ) : (
+              <div className="w-16 h-16 rounded-full bg-white/5 border border-white/10 flex items-center justify-center text-gray-500">
+                <User className="w-7 h-7" />
+              </div>
+            )}
+            <label className="absolute -bottom-1 -right-1 w-6 h-6 rounded-full bg-white text-black flex items-center justify-center cursor-pointer hover:bg-gray-100 transition-colors">
+              {avatarUploading ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Camera className="w-3.5 h-3.5" />}
+              <input type="file" accept="image/*" className="hidden" onChange={handleAvatarChange} disabled={avatarUploading} />
+            </label>
+          </div>
+          <div>
+            <p className="text-sm font-semibold text-white">Profil rasmi</p>
+            <p className="text-xs text-gray-500">JPG yoki PNG formatda yuklang</p>
+            {avatarError && <p className="text-xs text-red-400 mt-1">{avatarError}</p>}
+            {saved === 'avatar' && <p className="text-xs text-green-400 mt-1 flex items-center gap-1"><CheckCircle className="w-3 h-3" /> Saqlandi</p>}
+          </div>
+        </div>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <Field label="To'liq ism" required>
             <input className={inputCls} value={profileForm.fullName}
