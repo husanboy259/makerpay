@@ -1,5 +1,5 @@
 'use client';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { paymentsApi, merchantsApi } from '@/lib/api';
 import { formatAmount, formatDate, statusBadgeClass, statusLabel, providerLabel } from '@/lib/utils';
@@ -87,6 +87,7 @@ function CreatePaymentModal({ onClose, onCreated }: { onClose: () => void; onCre
     }
   }, [merchant]);
   const [error, setError] = useState('');
+  const popupRef = useRef<Window | null>(null);
 
   const mut = useMutation({
     mutationFn: () => paymentsApi.create({
@@ -101,9 +102,18 @@ function CreatePaymentModal({ onClose, onCreated }: { onClose: () => void; onCre
     onSuccess: (res: any) => {
       setResult(res);
       onCreated();
-      if (res?.paymentUrl) window.open(res.paymentUrl, '_blank');
+      if (res?.paymentUrl) {
+        if (popupRef.current && !popupRef.current.closed) {
+          popupRef.current.location.href = res.paymentUrl;
+        } else {
+          window.open(res.paymentUrl, '_blank');
+        }
+      }
     },
-    onError: (e: any) => setError(e?.message || 'Xatolik yuz berdi'),
+    onError: (e: any) => {
+      setError(e?.message || 'Xatolik yuz berdi');
+      if (popupRef.current && !popupRef.current.closed) popupRef.current.close();
+    },
   });
 
   const set = (k: string, v: string) => setForm(f => ({ ...f, [k]: v }));
@@ -196,7 +206,7 @@ function CreatePaymentModal({ onClose, onCreated }: { onClose: () => void; onCre
                 className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white text-sm focus:outline-none focus:border-white/30 transition-all placeholder:text-gray-600" />
             </div>
 
-            <button onClick={() => mut.mutate()} disabled={mut.isPending || !form.amount || Number(form.amount) < 1000}
+            <button onClick={() => { popupRef.current = window.open('', '_blank'); mut.mutate(); }} disabled={mut.isPending || !form.amount || Number(form.amount) < 1000}
               className="w-full py-3.5 rounded-xl bg-white text-black font-black text-sm hover:bg-gray-100 transition-all disabled:opacity-50 flex items-center justify-center gap-2">
               {mut.isPending ? <Loader2 className="w-4 h-4 animate-spin" /> : <Plus className="w-4 h-4" />}
               {mut.isPending ? 'Yaratilmoqda...' : 'To\'lov yaratish'}
