@@ -96,7 +96,7 @@ export default function PricingPage() {
         )}
       </div>
 
-      <div className="max-w-7xl mx-auto px-4 py-16">
+      <div className="max-w-[1440px] mx-auto px-4 py-16">
         {/* Header */}
         <div className="text-center mb-14">
           <div className="inline-flex items-center gap-2 bg-white/5 border border-white/10 text-gray-400 text-xs font-semibold px-4 py-2 rounded-full mb-4">

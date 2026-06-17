@@ -33,6 +33,8 @@ export const authApi = {
   updateProfile:   (data: any)  => api.put('/auth/profile', data),
   changePassword:  (data: any)  => api.post('/auth/change-password', data),
   telegramLogin:   (data: any)  => api.post('/auth/telegram', data),
+  forgotPassword:  (email: string) => api.post('/auth/forgot-password', { email }),
+  resetPassword:   (data: { email: string; otp: string; newPassword: string }) => api.post('/auth/reset-password', data),
 };
 
 // ─── Merchants ────────────────────────────────────────────────────────────────

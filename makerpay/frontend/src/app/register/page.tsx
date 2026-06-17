@@ -369,6 +369,11 @@ export default function RegisterPage() {
             Akkauntingiz bormi?{' '}
             <Link href="/login" className="text-white font-medium hover:underline">Kirish</Link>
           </p>
+          <p className="text-center text-xs text-gray-700 mt-3">
+            Ro&apos;yxatdan o&apos;tish orqali siz{' '}
+            <Link href="/terms" className="text-gray-500 hover:text-white underline transition-colors">Foydalanish shartlari</Link>
+            ga rozilik bildirasiz
+          </p>
         </div>
       </div>
     </div>

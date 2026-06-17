@@ -131,7 +131,7 @@ export default function LandingPage() {
 
       {/* ── NAV ── */}
       <nav className={`fixed top-0 w-full z-50 transition-all duration-300 ${scrolled ? 'bg-black/90 backdrop-blur-md border-b border-white/10' : 'bg-transparent'}`}>
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
+        <div className="max-w-[1440px] mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
           <div className="flex items-center gap-2">
             <div className="w-9 h-9 rounded-xl overflow-hidden border border-white/10 shrink-0">
               <img src="/logo.png" alt="MakerPay" style={{width:36,height:36,objectFit:'contain',background:'#000'}} />
@@ -177,7 +177,7 @@ export default function LandingPage() {
         <div className="absolute inset-0 opacity-[0.03]"
           style={{ backgroundImage: 'radial-gradient(circle, white 1px, transparent 1px)', backgroundSize: '32px 32px' }} />
 
-        <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 sm:py-20 grid lg:grid-cols-2 gap-8 lg:gap-16 items-center w-full">
+        <div className="relative max-w-[1440px] mx-auto px-4 sm:px-6 lg:px-8 py-12 sm:py-20 grid lg:grid-cols-2 gap-8 lg:gap-16 items-center w-full">
           <div>
             <div className="inline-flex items-center gap-2 bg-white/5 border border-white/10 rounded-full px-3 py-1.5 mb-4 sm:mb-6 animate-fade-in delay-100">
               <span className="w-2 h-2 rounded-full bg-green-400 animate-ping-slow" />
@@ -310,7 +310,7 @@ export default function LandingPage() {
 
       {/* ── STATS ── */}
       <section className="py-10 sm:py-14 border-y border-white/5 bg-[#0a0a0a]">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 grid grid-cols-2 md:grid-cols-4 gap-6 sm:gap-8 text-center">
+        <div className="max-w-[1440px] mx-auto px-4 sm:px-6 lg:px-8 grid grid-cols-2 md:grid-cols-4 gap-6 sm:gap-8 text-center">
           {[
             { v: '99.9%', l: 'Uptime SLA' },
             { v: '5+',    l: "To'lov provayderlari" },
@@ -327,7 +327,7 @@ export default function LandingPage() {
 
       {/* ── FEATURES ── */}
       <section id="features" className="py-14 sm:py-24 bg-black">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="max-w-[1440px] mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-10 sm:mb-16">
             <span data-reveal className="inline-block bg-white/5 border border-white/10 text-gray-500 text-xs font-semibold px-3 py-1 rounded-full mb-3 sm:mb-4 uppercase tracking-wide">Xususiyatlar</span>
             <h2 data-reveal data-delay="100" className="text-2xl sm:text-4xl md:text-5xl font-extrabold text-white mb-3 sm:mb-4">Biznesingiz uchun <span className="text-gray-500">hamma narsa</span></h2>
@@ -353,7 +353,7 @@ export default function LandingPage() {
       {/* ── HOW IT WORKS ── */}
       <section id="how" className="py-14 sm:py-24 bg-[#0a0a0a] relative">
         <div className="absolute top-0 left-0 w-full h-px bg-gradient-to-r from-transparent via-white/10 to-transparent" />
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="max-w-[1440px] mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-10 sm:mb-16">
             <span data-reveal className="inline-block bg-white/5 border border-white/10 text-gray-500 text-xs font-semibold px-3 py-1 rounded-full mb-3 sm:mb-4 uppercase tracking-wide">Qanday ishlaydi</span>
             <h2 data-reveal data-delay="100" className="text-2xl sm:text-4xl md:text-5xl font-extrabold text-white mb-3 sm:mb-4">4 qadamda <span className="text-gray-500">boshlang</span></h2>
@@ -383,7 +383,7 @@ export default function LandingPage() {
 
       {/* ── PROVIDERS ── */}
       <section id="providers" className="py-14 sm:py-24 bg-black">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="max-w-[1440px] mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-10 sm:mb-16">
             <span data-reveal className="inline-block bg-white/5 border border-white/10 text-gray-500 text-xs font-semibold px-3 py-1 rounded-full mb-3 sm:mb-4 uppercase tracking-wide">Provayderlar</span>
             <h2 data-reveal data-delay="100" className="text-2xl sm:text-4xl md:text-5xl font-extrabold text-white mb-3 sm:mb-4">Barcha yetakchi <span className="text-gray-500">provayderlar</span></h2>
@@ -448,7 +448,7 @@ export default function LandingPage() {
       {/* ── PRICING ── */}
       <section id="pricing" className="py-14 sm:py-24 bg-[#0a0a0a] relative">
         <div className="absolute top-0 left-0 w-full h-px bg-gradient-to-r from-transparent via-white/10 to-transparent" />
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="max-w-[1440px] mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-10 sm:mb-16">
             <span data-reveal className="inline-block bg-white/5 border border-white/10 text-gray-500 text-xs font-semibold px-3 py-1 rounded-full mb-3 sm:mb-4 uppercase tracking-wide">Tariflar</span>
             <h2 data-reveal data-delay="100" className="text-2xl sm:text-4xl md:text-5xl font-extrabold text-white mb-3 sm:mb-4">
@@ -565,7 +565,7 @@ export default function LandingPage() {
 
       {/* ── FOOTER ── */}
       <footer className="bg-black border-t border-white/5 py-10">
-        <div data-reveal className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col md:flex-row items-center justify-between gap-4">
+        <div data-reveal className="max-w-[1440px] mx-auto px-4 sm:px-6 lg:px-8 flex flex-col md:flex-row items-center justify-between gap-4">
           <div className="flex items-center gap-3">
             <div className="w-8 h-8 rounded-lg overflow-hidden border border-white/10 shrink-0">
               <img src="/logo.png" alt="MakerPay" style={{width:32,height:32,objectFit:'contain',background:'#000'}} />

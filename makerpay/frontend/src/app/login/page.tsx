@@ -175,7 +175,9 @@ export default function LoginPage() {
         </div>
 
         <p className="text-center text-gray-700 text-xs mt-6 animate-fade-in delay-500">
-          © 2026 MakerPay.uz · Barcha huquqlar himoyalangan
+          © 2026 MakerPay.uz ·{' '}
+          <Link href="/terms" className="hover:text-gray-500 transition-colors">Foydalanish shartlari</Link>
+          {' '}· Barcha huquqlar himoyalangan
         </p>
       </div>
     </div>

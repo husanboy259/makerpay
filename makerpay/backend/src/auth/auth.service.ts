@@ -242,6 +242,35 @@ export class AuthService {
     return { message: 'Password changed successfully' };
   }
 
+  async forgotPassword(email: string) {
+    const user = await this.userRepo.findOne({ where: { email } });
+    if (!user) return { message: 'Agar bu email ro\'yxatdan o\'tgan bo\'lsa, kod yuboriladi' };
+
+    const otp = Math.floor(100000 + Math.random() * 900000).toString();
+    const otpExpiresAt = new Date(Date.now() + 10 * 60 * 1000);
+    await this.userRepo.update(user.id, { otpCode: otp, otpExpiresAt });
+    await this.mailService.sendPasswordReset(user.email, otp, user.fullName);
+    return { message: 'Parol tiklash kodi emailga yuborildi' };
+  }
+
+  async resetPassword(email: string, otp: string, newPassword: string) {
+    const user = await this.userRepo.findOne({
+      where: { email },
+      select: ['id', 'email', 'otpCode', 'otpExpiresAt'],
+    });
+    if (!user || !user.otpCode) throw new BadRequestException('Kod noto\'g\'ri yoki muddati tugagan');
+    if (user.otpCode !== otp) throw new BadRequestException('Kod noto\'g\'ri');
+    if (new Date() > user.otpExpiresAt) throw new BadRequestException('Kod muddati tugagan. Qaytadan so\'rang');
+
+    const hashed = await bcrypt.hash(newPassword, 12);
+    await this.userRepo.update(user.id, {
+      password: hashed,
+      otpCode: null as any,
+      otpExpiresAt: null as any,
+    });
+    return { message: 'Parol muvaffaqiyatli o\'zgartirildi' };
+  }
+
   private generateTokens(user: User) {
     const payload = { sub: user.id, email: user.email, role: user.role };
     const accessToken = this.jwtService.sign(payload);
